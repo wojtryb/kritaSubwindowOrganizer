@@ -44,7 +44,8 @@ Gives the ability to switch subwindows with each other. Uses active subwindow.\
 ## Known issues:
 -pressing minimize on maximized window makes it impossible to demaximize (such document have to be saved and closed)\
 -after going from maximize to normal, split screen looses minimal width for both windows (one can take whole space if krita window is shrinked a lot)\
--not working in "tabs" mode - currently won't install in this case and will put a message box, but still this mode can be turned on during add-on work.\
+-not working in "tabs" mode - currently won't install in this case and will put a message box, but still this mode can be turned on during add-on work./
+-will not work very well with the default 'tile' and 'cascade' organizers.
 
 ## To be done:
 -remove title bar for the background windows and replacing them with a custom widget (maximize and close) as the minimize is idle, and they can't be moved apart from resizing width.\
