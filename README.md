@@ -6,13 +6,13 @@ Krita plugin that helps keep order of subwindows.
 Can be configured in *Settings > Configure Krita... > General > Window > Multiple Document Mode.*
 
 ## Installation:
--Get the krita resources folder location: *"Settings > Manage Resources > Open Resource Folder".*\
+-get the krita resources folder location: *"Settings > Manage Resources > Open Resource Folder".*\
 -in 'pykrita' folder, put downloaded 'pykrita' contents.\
 -in 'actions' folder, put downloaded 'actions' contents.\
 -restart krita.\
 -activate the addon: *Settings > Configure Krita... > Python Plugin Manager > Subwindow Organizer (ON).*\
 -restart krita again.\
--New actions are on the bottom of "View" menu. Keyboard shortcuts can be changed in settings.
+-new actions are on the bottom of "View" menu. Keyboard shortcuts can be changed in settings.
 
 ## Features:
 **-responsive subwindows:** never get larger than workspace. Adjusts to krita window resize, dockers resize, togglign fullscreen and canvas-only modes.\
