@@ -51,5 +51,6 @@ Gives the ability to switch subwindows with each other. Uses active subwindow.\
 ## To be done:
 -remove title bar for the background windows and replacing them with a custom widget (maximize and close) as the minimize is idle, and they can't be moved apart from resizing width.\
 -ability to toggle the whole add-on without closing krita - will solve the tabs mode issue.\
+-allow to swap floater and background window by drag-and-dropping the latter to the floater.
 
 **-Main task:** integrate my "reference tracking canvas" script. When this mode is enabled, panning, rotating and mirroring the canvas, would cause the reference image to do the same. Current script don't apply pan and runs on keyboard action, but the canvas could be continuously tracked.
