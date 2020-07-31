@@ -80,10 +80,10 @@ class mdiAreaFilter(QMdiArea):
 		self.openFun = openFun
 
 	def eventFilter(self, obj, e):
-		if e.type() == QEvent.Resize:
-			self.moveSubwindows()
-			self.areaChanged()
 		if not sip.isdeleted(self.mdiArea):
+			if e.type() == QEvent.Resize:
+				self.moveSubwindows()
+				self.areaChanged()
 			#there are many more events, as subwindows aren't the only children, so the change have to be found as change in list size
 			if e.type() == QEvent.ChildAdded:
 				if self.views < len(self.mdiArea.subWindowList()):
@@ -164,6 +164,7 @@ class resizer:
 		if self.views > 1 and self.refNeeded:
 			if self.otherSubwin == None:
 				self.getOtherSubwin()
+				# self.otherSubwin.showNormal()
 				self.otherSubwin.removeEventFilter(self.subWindowFilterFloater)
 				self.toggleAlwaysOnTop(self.otherSubwin, False)
 		
