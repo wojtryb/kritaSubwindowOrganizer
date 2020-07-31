@@ -42,6 +42,7 @@ Gives the ability to switch subwindows with each other. Uses active subwindow.
 - **minimize** (override): only floating windows can get minimized.
 
 ## Known issues:
+- CRITICAL: using multiple krita windows (window > new window) causes the script to crash when one of this windows closes. (thanks to Rakurri for finding)
 - pressing minimize on maximized window makes it impossible to demaximize (such document have to be saved and closed)
 - after going from maximize to normal, split screen looses minimal width for both windows (one can take whole space if krita window is shrinked a lot)
 - not working in "tabs" mode - currently won't install in this case and will put a message box, but still this mode can be turned on during add-on work.
