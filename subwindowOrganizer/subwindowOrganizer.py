@@ -6,15 +6,14 @@ import sip
 
 #event catcher for windows on back
 class subWindowFilterBackground(QMdiSubWindow):
-	def __init__(self, moveSubwindows, otherSubwin, parent=None):
+	def __init__(self, resizer, parent=None):
 		super().__init__(parent)
-		self.moveSubwindows = moveSubwindows
-		self.otherSubwin = otherSubwin
+		self.resizer = resizer
 	def eventFilter(self, obj, e):
 		if e.type() == QEvent.Resize:
-			self.moveSubwindows()
+			self.resizer.moveSubwindows()
+
 		elif e.type() == QEvent.WindowStateChange:
-			pass
 			oldMinimized = False
 			if int(e.oldState()) & int(Qt.WindowMinimized) != 0:
 				oldMinimized = True
@@ -28,21 +27,20 @@ class subWindowFilterBackground(QMdiSubWindow):
 
 #event catcher for floating windows
 class subWindowFilterFloater(QMdiSubWindow):
-	def __init__(self, snapToBorder, parent=None):
+	def __init__(self, resizer, parent=None):
 		super().__init__(parent)
-		self.snapToBorder = snapToBorder
+		self.resizer = resizer
 	def eventFilter(self, obj, e):
 		if e.type() == QEvent.Move:
-			self.snapToBorder(obj)
+			self.resizer.snapToBorder(obj)
 
 		return False
 
 #event catcher for every window - both floaters and back ones
 class subWindowFilterAll(QMdiSubWindow):
-	def __init__(self, hideAllExcept, showAll, parent=None):
+	def __init__(self, resizer, parent=None):
 		super().__init__(parent)
-		self.hide = hideAllExcept
-		self.show = showAll
+		self.resizer = resizer
 
 		self.isMaximized = False #is any window currently maximized
 	def eventFilter(self, obj, e):
@@ -53,55 +51,70 @@ class subWindowFilterAll(QMdiSubWindow):
 				oldMaximized = True
 
 			if obj.isMaximized() and not oldMaximized: #there was a change to maximized state
-				self.hide(obj)
+				self.resizer.hideAllExcept(obj)
 				self.isMaximized = True
 			if not obj.isMaximized() and oldMaximized: #there was a change to normal from maximize
-				self.show()
+				self.resizer.showAll()
 				self.isMaximized = False
 
 		# krita will crush if there will be a maximized window in usual close handling - it has to be made normal before it
 		if e.type() == QEvent.Close:
 			obj.showNormal()
-			self.show()
+			self.resizer.showAll()
 			self.isMaximized = False
 
 		return False
 
 #event catcher for the workspace - changes in size, and subwindows added and removed
 class mdiAreaFilter(QMdiArea):
-	def __init__(self, views, moveSubwindows, areaChanged, mdiArea, closeFun, openFun, parent=None):
+	def __init__(self, resizer, parent=None):
 		super().__init__(parent)
-		self.moveSubwindows = moveSubwindows
-		self.areaChanged = areaChanged
-		self.views = views
-		self.mdiArea = mdiArea
-
-		self.closeFun = closeFun
-		self.openFun = openFun
+		self.resizer = resizer
+		self.sizeBefore = [resizer.mdiArea.width(), resizer.mdiArea.height()]
+		# self.availableWidth = resizer.mdiArea.width()
 
 	def eventFilter(self, obj, e):
-		if not sip.isdeleted(self.mdiArea):
+		if not sip.isdeleted(self.resizer.mdiArea):
 			if e.type() == QEvent.Resize:
-				self.moveSubwindows()
-				self.areaChanged()
+				# self.resizer.moveSubwindows(checkSizeChange = False) #move background windows without checking for subwindow resizing
+				self.resizer.moveSubwindows()
+				self.moveFloatersOnAreaChange() #move floaters
+				self.sizeBefore = [self.resizer.mdiArea.width(), self.resizer.mdiArea.height()] #changes done, can actualize width and height of workspace
+				# self.availableWidth = self.resizer.mdiArea.width()
 			#there are many more events, as subwindows aren't the only children, so the change have to be found as change in list size
 			if e.type() == QEvent.ChildAdded:
-				if self.views < len(self.mdiArea.subWindowList()):
-					self.openFun()
-					self.views = len(self.mdiArea.subWindowList())
+				if self.resizer.views < len(self.resizer.mdiArea.subWindowList()):
+					self.resizer.viewOpenedEvent()
+					self.resizer.views = len(self.resizer.mdiArea.subWindowList())
 
 			if e.type() == QEvent.ChildRemoved:
-				if self.views > len(self.mdiArea.subWindowList()):
-					self.closeFun()
-					self.views = len(self.mdiArea.subWindowList())
+				if self.resizer.views > len(self.resizer.mdiArea.subWindowList()):
+					self.resizer.viewClosedEvent()
+					self.resizer.views = len(self.resizer.mdiArea.subWindowList())
 		return False
 
+	#actialize the workspace width and snap all floaters to border
+	def moveFloatersOnAreaChange(self):
+		
+		for subwindow in self.resizer.mdiArea.subWindowList():
+			if subwindow != self.resizer.activeSubwin and subwindow != self.resizer.otherSubwin:
+				x = subwindow.pos().x()
+				y = subwindow.pos().y()
+
+				if x > self.resizer.mdiArea.width() - subwindow.width() - x: #closer to the right border of canvas than left one
+					x += self.resizer.mdiArea.width() - self.sizeBefore[0]
+				if y > self.resizer.mdiArea.height() - subwindow.height() - y: #closer to the right border of canvas than left one
+					y += self.resizer.mdiArea.height() - self.sizeBefore[1]
+				subwindow.move(x, y)
+
+				self.resizer.snapToBorder(subwindow)
+
 class resizer:
-	
 	#user customization
 	defaultColumnRatio = 0.33 #as part of the workspace width
 	minimalColumnWidth = 100 #in pixels
 	defaultFloatingSize = QSize(500,300) #size of newly created window
+	snapDistance = 30
 
 	def __init__(self, qwin):
 		self.activeSubwin = None #main canvas for drawing
@@ -113,12 +126,12 @@ class resizer:
 		self.mdiArea = self.qWin.centralWidget().findChild(QMdiArea)
 		self.views = len(self.mdiArea.subWindowList()) #0 on start - amount of opened subwindows
 
-		self.mdiAreaFilter = mdiAreaFilter(self.views, self.moveSubwindows, self.areaChanged, self.mdiArea, self.viewClosedEvent, self.viewOpenedEvent)
+		self.mdiAreaFilter = mdiAreaFilter(self)
 		self.mdiArea.installEventFilter(self.mdiAreaFilter)
 
-		self.subWindowFilterBackground = subWindowFilterBackground(self.moveSubwindows, self.otherSubwin) #installation on subwindows happens later
-		self.subWindowFilterFloater = subWindowFilterFloater(self.snapToBorder)
-		self.subWindowFilterAll = subWindowFilterAll(self.hideAllExcept, self.showAll)
+		self.subWindowFilterBackground = subWindowFilterBackground(self) #installation on subwindows happens later
+		self.subWindowFilterFloater = subWindowFilterFloater(self)
+		self.subWindowFilterAll = subWindowFilterAll(self)
 
 	#hiding windows, when one gets maximized
 	def hideAllExcept(self, exception):
@@ -128,9 +141,9 @@ class resizer:
 		if self.otherSubwin != None: self.otherSubwin.setMinimumWidth(0)
 
 	#showind all hidden window, when maximized turns normal
-	def showAll(self, exception = None):
+	def showAll(self):
 		for subwindow in self.mdiArea.subWindowList():
-			if subwindow != exception: subwindow.show()
+			subwindow.show()
 
 	#each time when subwindow is closed
 	def viewClosedEvent(self):
@@ -172,7 +185,9 @@ class resizer:
 
 	#each time when subwindow is opened
 	def viewOpenedEvent(self):
+
 		self.views = len(self.mdiArea.subWindowList())
+		current = self.mdiArea.activeSubWindow()
 
 		if self.activeSubwin != None: self.activeSubwin.setMinimumWidth(self.minimalColumnWidth) #temporarily here, until I find a better place for it
 		if self.otherSubwin != None: self.otherSubwin.setMinimumWidth(self.minimalColumnWidth)
@@ -184,13 +199,12 @@ class resizer:
 		if self.views == 1:
 			self.getActiveSubwin()
 
-		if self.views >= 2:
-			self.deMaximizeAll()
+		if self.views >= 2 and current.isMaximized():
+			current.showNormal()
 
 		if self.views == 2 and self.refNeeded: # open in split screen
 			self.getOtherSubwin()
 			self.otherSubwin.resize(int(self.defaultColumnRatio*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
-			self.areaChanged()#?
 
 		if (self.views >= 3 and self.refNeeded) or (self.views >= 2 and (not self.refNeeded)): #open as floating window
 			newSubwindow.installEventFilter(self.subWindowFilterFloater)
@@ -198,11 +212,6 @@ class resizer:
 			newSubwindow.resize(self.defaultFloatingSize)
 
 		self.moveSubwindows()
-
-	def deMaximizeAll(self, exception = None):
-		for subWindow in self.mdiArea.subWindowList():
-			if subWindow != exception:
-				subWindow.showNormal()
 
 	def toggleAlwaysOnTop(self, subwindow, check):
 		menu = subwindow.children()[0]
@@ -213,11 +222,11 @@ class resizer:
 		x = subwindow.pos().x()
 		y = subwindow.pos().y()
 
-		if x < 0: x = 0
-		if y < 0: y = 0
-		if x + subwindow.width() > self.mdiArea.width():
+		if x < self.snapDistance : x = 0
+		if y < self.snapDistance: y = 0
+		if x + subwindow.width() > self.mdiArea.width() - self.snapDistance:
 			x = self.mdiArea.width() - subwindow.width()
-		if y + subwindow.height() > self.mdiArea.height():
+		if y + subwindow.height() > self.mdiArea.height() - self.snapDistance:
 			y = self.mdiArea.height() - subwindow.height()
 
 		subwindow.move(x, y)
@@ -240,32 +249,31 @@ class resizer:
 		self.columnWidth = self.otherSubwin.width()
 		self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
 
-	#actialize the workspace width and snap all floaters to border
-	def areaChanged(self):
-		self.availableWidth = self.mdiArea.width()
-		for subwindow in self.mdiArea.subWindowList():
-			self.snapToBorder(subwindow)			
+
 
 	#user changed size of one window in background - other has to know the right amount of space left 
-	def checkSizeChanges(self):
-		if self.availableWidth == self.mdiArea.width():
+	def checkSizeChanges(self): 
+		if self.mdiAreaFilter.sizeBefore[0] == self.mdiArea.width(): #fix to prevent ref window to change on workspace resize
 			if self.otherSubwin.width() != self.columnWidth:
 				self.columnWidth = self.otherSubwin.width()
 			elif self.activeSubwin.width() != self.mdiArea.width() - self.columnWidth:
 				self.columnWidth = self.mdiArea.width() - self.activeSubwin.width()
 
 	#window react to change in workspace size or adjust to changed size of the other 
-	def moveSubwindows(self):
-		if self.refNeeded and self.activeSubwin != None and self.otherSubwin != None: #two split windows
-			self.checkSizeChanges()
-			self.otherSubwin.move(0,0)
-			self.otherSubwin.resize(self.columnWidth, self.mdiArea.height())
-			self.activeSubwin.move(self.columnWidth, 0)
-			self.activeSubwin.resize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
+	def moveSubwindows(self, checkSizeChange = True):
+		current = self.mdiArea.activeSubWindow()
+		if current != None: #weird situation with maximized background window
+			if self.refNeeded and self.activeSubwin != None and self.otherSubwin != None and (not current.isMaximized()): #two split windows
+				if checkSizeChange == True:
+					self.checkSizeChanges()
+				self.otherSubwin.move(0,0)
+				self.otherSubwin.resize(self.columnWidth, self.mdiArea.height())
+				self.activeSubwin.move(self.columnWidth, 0)
+				self.activeSubwin.resize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
 
-		if (not self.refNeeded) and self.activeSubwin != None: #one window on whole workspace
-			self.activeSubwin.move(0,0)
-			self.activeSubwin.resize(self.mdiArea.size())
+			if (not self.refNeeded) and self.activeSubwin != None: #one window on whole workspace
+				self.activeSubwin.move(0,0)
+				self.activeSubwin.resize(self.mdiArea.size())
 
 	#switch between 'split mode' and 'one window' mode
 	def userToggleMode(self):
