@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=subwindowOrganizer
+X-Python-2-Compatible=false
+Name=Subwindow Organizer
+Comment=Helps to keep order when using multiple documents at once

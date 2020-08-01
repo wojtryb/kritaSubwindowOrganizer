@@ -9,9 +9,8 @@ Fixed a critical bug that caused krita to crush when closing one of windows open
 Can be configured in *Settings > Configure Krita... > General > Window > Multiple Document Mode.*
 
 ## Installation:
-- get the krita resources folder location: *"Settings > Manage Resources > Open Resource Folder".*
-- in 'pykrita' folder, put downloaded 'pykrita' contents.
-- in 'actions' folder, put downloaded 'actions' contents.
+- on github, click the green button 'code' and pick 'download zip'. Do not extract it.
+- go to *Tools > Scripts > Import Python Plugin* and pick the downloaded .zip file
 - restart krita.
 - activate the addon: *Settings > Configure Krita... > Python Plugin Manager > Subwindow Organizer (ON).*
 - restart krita again.
