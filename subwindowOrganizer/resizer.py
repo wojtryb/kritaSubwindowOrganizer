@@ -132,12 +132,13 @@ class resizer:
 		self.otherSubwin.resize(int(self.defaultColumnRatio*self.mdiArea.width()), self.mdiArea.height())
 
 	def switchBackgroundAndFloater(self, background, floater):
-		floaterPos = floater.pos() #resize and move both
-		floaterSize = floater.size()
+		floaterPos = copy(floater.pos()) #resize and move both
+		floaterSize = copy(floater.size())
 
 		floater.removeEventFilter(self.subWindowFilterFloater)
 		floater.installEventFilter(self.subWindowFilterBackground)
 		self.toggleAlwaysOnTop(floater, False)
+		print("shouldBeNow")
 
 		if background == self.activeSubwin: #the only way it works well
 			floater.move(self.activeSubwin.pos())

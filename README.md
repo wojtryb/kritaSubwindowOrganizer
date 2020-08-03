@@ -1,8 +1,9 @@
 # Subwindow organizer for krita
 Krita plugin that helps keep order of subwindows.
 
-## What's new in 1.0.1:
-Fixed a critical bug that caused krita to crush when closing one of windows opened with "window > new window" (thanks to Rakurri for finding it)
+## What's new in 1.0.2:
+- subwindows now snap to corners if the workspace is getting larger (going into canvas-only mode)
+- fixed a crash when opening complex files with drag and drop
 
 ## Requirement:
 'subwindow' mode is enabled, instead of the default 'tabs'.\
@@ -49,7 +50,7 @@ Gives the ability to switch subwindows with each other. Uses active subwindow.
 - not working in "tabs" mode - currently won't install in this case and will put a message box, but still this mode can be turned on during add-on work.
 - will not work very well with the default 'tile' and 'cascade' organizers.
 - minimized window won't be automatically put in the background, if the background one gets closed.
-- opening new window don't work when if background window is maximized (split mode)
+- opening new window don't work when background window is maximized (split mode)
 
 ## To be done:
 - remove title bar for the background windows and replacing them with a custom widget (maximize and close) as the minimize is idle, and they can't be moved apart from resizing width.

@@ -84,8 +84,9 @@ class mdiAreaFilter(QMdiArea):
 		if resizer.views == 1:
 			resizer.getActiveSubwin()
 
-		if resizer.views >= 2 and current.isMaximized():
-			current.showNormal()
+		if current != None: #happens with psd, ora dropped?
+			if resizer.views >= 2 and current.isMaximized():
+				current.showNormal()
 
 		if resizer.views == 2 and resizer.refNeeded: # open in split screen
 			resizer.getOtherSubwin()
