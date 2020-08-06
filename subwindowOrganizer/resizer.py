@@ -82,14 +82,29 @@ class resizer:
 			if self.refNeeded and self.activeSubwin != None and self.otherSubwin != None and (not current.isMaximized()): #two split windows
 				if checkSizeChange == True:
 					checkSizeChanges(self)
-				self.otherSubwin.move(0,0)
-				self.otherSubwin.resize(self.columnWidth, self.mdiArea.height())
-				self.activeSubwin.move(self.columnWidth, 0)
-				self.activeSubwin.resize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
+
+				self.getBackgroundSizes()
+				self.otherSubwin.move(self.otherPos)
+				self.otherSubwin.resize(self.otherSize)
+				self.activeSubwin.move(self.activePos)
+				self.activeSubwin.resize(self.activeSize)
 
 			if (not self.refNeeded) and self.activeSubwin != None: #one window on whole workspace
 				self.activeSubwin.move(0,0)
 				self.activeSubwin.resize(self.mdiArea.size())
+
+	def getBackgroundSizes(self):
+		if REFPOSITION == "left":
+			self.otherPos = QPoint(0,0)
+			self.otherSize = QSize(self.columnWidth, self.mdiArea.height())
+			self.activePos = QPoint(self.columnWidth, 0)
+			self.activeSize = QSize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
+
+		elif REFPOSITION == "right":
+			self.otherPos = QPoint(int(self.mdiArea.width()-self.columnWidth), 0)
+			self.otherSize = QSize(self.columnWidth, self.mdiArea.height())
+			self.activePos = QPoint(0,0)
+			self.activeSize = QSize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
 
 	#switch between 'split mode' and 'one window' mode
 	def userToggleMode(self):
@@ -136,7 +151,6 @@ class resizer:
 		floater.removeEventFilter(self.subWindowFilterFloater)
 		floater.installEventFilter(self.subWindowFilterBackground)
 		self.toggleAlwaysOnTop(floater, False)
-		print("shouldBeNow")
 
 		if background == self.activeSubwin: #the only way it works well
 			floater.move(self.activeSubwin.pos())

@@ -97,7 +97,7 @@ class mdiAreaFilter(QMdiArea):
 		if (resizer.views >= 3 and resizer.refNeeded) or (resizer.views >= 2 and (not resizer.refNeeded)): #open as floating window
 			newSubwindow.installEventFilter(resizer.subWindowFilterFloater)
 			resizer.toggleAlwaysOnTop(newSubwindow, True)
-			newSubwindow.resize(DEFAULTfLOATINGSIZE)
+			newSubwindow.resize(DEFAULTFLOATERSIZE)
 
 		resizer.moveSubwindows()
 
