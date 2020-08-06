@@ -129,6 +129,7 @@ class resizer:
 				current = self.mdiArea.activeSubWindow()
 				if current != self.activeSubwin:
 					self.otherSubwin = self.mdiArea.activeSubWindow()
+					self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
 				else:
 					self.getOtherSubwin()
 				self.columnWidth = self.otherSubwin.width()
