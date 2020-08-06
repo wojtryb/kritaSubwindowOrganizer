@@ -22,7 +22,10 @@ class subWindowFilterBackground(QMdiSubWindow):
 			if int(e.oldState()) & int(Qt.WindowMinimized) != 0:
 				oldMinimized = True
 			if obj.isMinimized(): 
-				obj.showNormal()
+				if obj.isMaximized():
+					obj.showMaximized()
+				else:
+					obj.showNormal()
 				return True
 			if not obj.isMinimized() and oldMinimized:
 				return True

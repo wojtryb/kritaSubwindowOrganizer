@@ -128,7 +128,8 @@ class resizer:
 			if self.views >= 2:
 				current = self.mdiArea.activeSubWindow()
 				if current != self.activeSubwin:
-					self.otherSubwin = self.mdiArea.activeSubWindow()
+					if current.isMinimized(): current.showNormal()
+					self.otherSubwin = current
 					self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
 				else:
 					self.getOtherSubwin()
@@ -137,15 +138,21 @@ class resizer:
 				self.toggleAlwaysOnTop(self.otherSubwin, False) #turn off
 
 	def switchBackgroundWindows(self):
+		self.otherSubwin.resize(self.activeSubwin.size())
+
 		temp = self.otherSubwin
 		self.otherSubwin = self.activeSubwin
 		self.activeSubwin = temp
 
 		self.mdiArea.setActiveSubWindow(self.activeSubwin)
-		self.columnWidth = self.otherSubwin.width()
-		self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height())
+
+
+		# self.columnWidth = self.otherSubwin.width()
+		print("switch")
+		# self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height())
 
 	def switchBackgroundAndFloater(self, background, floater):
+		if floater.isMinimized(): floater.showNormal()
 		floaterPos = copy(floater.pos()) #resize and move both
 		floaterSize = copy(floater.size())
 
