@@ -51,8 +51,7 @@ class mdiAreaFilter(QMdiArea):
 			if resizer.otherSubwin == None: #no ref window (non-split mode)
 				resizer.getOtherSubwin()
 				resizer.toggleAlwaysOnTop(resizer.otherSubwin, False)
-			if REFPOSITION in ["left", "right"]: resizer.otherSubwin.resize(resizer.mdiArea.width() - resizer.columnWidth, resizer.mdiArea.height())
-			else:  resizer.otherSubwin.resize(resizer.mdiArea.height() - resizer.columnWidth, resizer.mdiArea.width())
+			resizer.otherSubwin.resize(resizer.mdiArea.width() - resizer.columnWidth, resizer.mdiArea.height())
 			resizer.otherSubwin.showNormal()
 			resizer.activeSubwin = resizer.otherSubwin
 			resizer.otherSubwin = None
