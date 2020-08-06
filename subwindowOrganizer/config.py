@@ -5,4 +5,4 @@ MINIMALCOLUMNWIDTH = 100 #in pixels
 DEFAULTFLOATERSIZE = QSize(500,300) #size of newly created window
 SNAPDISTANCE = 30 
 
-REFPOSITION = "left"
+REFPOSITION = "top"
