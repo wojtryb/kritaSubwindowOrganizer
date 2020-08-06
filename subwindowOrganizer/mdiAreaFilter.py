@@ -1,6 +1,8 @@
 from krita import *
 import sip
  
+from .config import *
+
 #event catcher for the workspace - changes in size, and subwindows added and removed
 class mdiAreaFilter(QMdiArea):
 	def __init__(self, resizer, parent=None):
@@ -74,8 +76,8 @@ class mdiAreaFilter(QMdiArea):
 		resizer.views = len(resizer.mdiArea.subWindowList())
 		current = resizer.mdiArea.activeSubWindow()
 
-		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(resizer.minimalColumnWidth) #temporarily here, until I find a better place for it
-		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(resizer.minimalColumnWidth)
+		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH) #temporarily here, until I find a better place for it
+		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 
 		#event catcher for every window, never removed 
 		newSubwindow = resizer.mdiArea.subWindowList()[-1]
@@ -90,12 +92,12 @@ class mdiAreaFilter(QMdiArea):
 
 		if resizer.views == 2 and resizer.refNeeded: # open in split screen
 			resizer.getOtherSubwin()
-			resizer.otherSubwin.resize(int(resizer.defaultColumnRatio*resizer.mdiArea.width()), resizer.mdiArea.height()) #default width for ref subwindow
+			resizer.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*resizer.mdiArea.width()), resizer.mdiArea.height()) #default width for ref subwindow
 
 		if (resizer.views >= 3 and resizer.refNeeded) or (resizer.views >= 2 and (not resizer.refNeeded)): #open as floating window
 			newSubwindow.installEventFilter(resizer.subWindowFilterFloater)
 			resizer.toggleAlwaysOnTop(newSubwindow, True)
-			newSubwindow.resize(resizer.defaultFloatingSize)
+			newSubwindow.resize(DEFAULTfLOATINGSIZE)
 
 		resizer.moveSubwindows()
 

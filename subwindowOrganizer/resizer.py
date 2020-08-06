@@ -9,12 +9,10 @@ from .subWindowFilterBackground import subWindowFilterBackground
 from .subWindowFilterFloater import subWindowFilterFloater
 from .subWindowFilterAll import subWindowFilterAll
 
+from .config import *
+
 class resizer:
 	#user customization
-	defaultColumnRatio = 0.33 #as part of the workspace width
-	minimalColumnWidth = 100 #in pixels
-	defaultFloatingSize = QSize(500,300) #size of newly created window
-	snapDistance = 30
 
 	def __init__(self, qwin):
 		self.activeSubwin = None #main canvas for drawing
@@ -42,11 +40,11 @@ class resizer:
 		x = subwindow.pos().x()
 		y = subwindow.pos().y()
 
-		if x < self.snapDistance : x = 0
-		if y < self.snapDistance: y = 0
-		if x + subwindow.width() > self.mdiArea.width() - self.snapDistance:
+		if x < SNAPDISTANCE : x = 0
+		if y < SNAPDISTANCE: y = 0
+		if x + subwindow.width() > self.mdiArea.width() - SNAPDISTANCE:
 			x = self.mdiArea.width() - subwindow.width()
-		if y + subwindow.height() > self.mdiArea.height() - self.snapDistance:
+		if y + subwindow.height() > self.mdiArea.height() - SNAPDISTANCE:
 			y = self.mdiArea.height() - subwindow.height()
 
 		subwindow.move(x, y)
@@ -57,7 +55,7 @@ class resizer:
 		else:
 			self.activeSubwin = self.mdiArea.activeSubWindow()
 		if self.activeSubwin != None: #bugfix - when multiple windows are closed at once, it can get here with both views deleted
-			self.activeSubwin.setMinimumWidth(self.minimalColumnWidth)
+			self.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 			self.activeSubwin.installEventFilter(self.subWindowFilterBackground)
 
 	def getOtherSubwin(self):
@@ -65,7 +63,7 @@ class resizer:
 			if subwindow != self.activeSubwin:
 				self.otherSubwin = subwindow
 				break
-		self.otherSubwin.setMinimumWidth(self.minimalColumnWidth)
+		self.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 		self.columnWidth = self.otherSubwin.width()
 		self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
 
@@ -105,7 +103,7 @@ class resizer:
 				self.otherSubwin.removeEventFilter(self.subWindowFilterBackground) #no longer one of the two main windows
 				self.otherSubwin.installEventFilter(self.subWindowFilterFloater)
 				self.otherSubwin.move(0,0)
-				self.otherSubwin.resize(self.defaultFloatingSize)
+				self.otherSubwin.resize(DEFAULTFLOATERSIZE)
 				self.toggleAlwaysOnTop(self.otherSubwin, True) #turn on
 				self.otherSubwin = None
 
@@ -119,7 +117,7 @@ class resizer:
 				else:
 					self.getOtherSubwin()
 				self.columnWidth = self.otherSubwin.width()
-				self.otherSubwin.resize(int(self.defaultColumnRatio*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
+				self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
 				self.toggleAlwaysOnTop(self.otherSubwin, False) #turn off
 
 	def switchBackgroundWindows(self):
@@ -129,7 +127,7 @@ class resizer:
 
 		self.mdiArea.setActiveSubWindow(self.activeSubwin)
 		self.columnWidth = self.otherSubwin.width()
-		self.otherSubwin.resize(int(self.defaultColumnRatio*self.mdiArea.width()), self.mdiArea.height())
+		self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height())
 
 	def switchBackgroundAndFloater(self, background, floater):
 		floaterPos = copy(floater.pos()) #resize and move both
