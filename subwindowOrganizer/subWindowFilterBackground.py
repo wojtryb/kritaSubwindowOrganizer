@@ -31,7 +31,6 @@ class subWindowFilterBackground(QMdiSubWindow):
 				return True
 
 		elif e.type() == QEvent.MouseButtonPress:
-			print("press")
 			cursorLocal = e.pos() #cursor in relation to window 
 			if -25 < cursorLocal.x() < 25 or  obj.width()-25 < cursorLocal.x() < obj.width()+25: #it is a resizeBool, not move
 				self.resizeBool = True
@@ -39,8 +38,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 				self.resizeBool = False
 
 		elif e.type() == QEvent.MouseButtonRelease:
-			if not self.resizeBool:
-				self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos()) #self.cursor in relation to mdiarea
+			self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos()) #self.cursor in relation to mdiarea
 
 		elif e.type() == QEvent.Move:
 			def isUnderMouse(subwindow, cursor):
@@ -49,10 +47,10 @@ class subWindowFilterBackground(QMdiSubWindow):
 					return True
 				return False
 
-			print(self.resizeBool, self.cursor)
-			if (not self.resizeBool) and self.cursor != None and not self.switchingInProgress:
+			if (not self.resizeBool) and not self.switchingInProgress:
 				self.switchingInProgress = True
-				for subwindow in self.resizer.mdiArea.subWindowList():
+
+				for subwindow in self.resizer.mdiArea.subWindowList(): #swapping with floaters
 					if isUnderMouse(subwindow, self.cursor) and subwindow != obj:
 						if subwindow != self.resizer.activeSubwin and subwindow != self.resizer.otherSubwin: #other floater, swap with it
 							if obj == self.resizer.activeSubwin:
@@ -61,13 +59,27 @@ class subWindowFilterBackground(QMdiSubWindow):
 								self.resizer.switchBackgroundAndFloater(self.resizer.otherSubwin, subwindow)
 
 							self.resizeBool = False
-							return False
+							return True
 
-				for subwindow in self.resizer.mdiArea.subWindowList():
+
+
+				if self.resizer.refNeeded and self.cursor.y() > self.resizer.mdiArea.height() - 5: #go out of split mode on mouse on bottom
+					# if obj == self.resizer.otherSubwin:
+						# self.resizer.userToggleMode()
+					if obj == self.resizer.activeSubwin: #bring it down as a floater
+						temp = self.resizer.activeSubwin
+						self.resizer.activeSubwin = self.resizer.otherSubwin
+						self.resizer.otherSubwin = temp
+
+					self.resizer.userToggleMode()
+
+
+					return True
+
+				for subwindow in self.resizer.mdiArea.subWindowList(): #swapping backgrounders
 					if isUnderMouse(subwindow, self.cursor) and subwindow != obj:
 						if subwindow == self.resizer.activeSubwin or subwindow == self.resizer.otherSubwin: #other background window - swap
 							self.resizer.switchBackgroundWindows()
-							print("SWITCH")
 							self.resizer.moveSubwindows()
 							break
 
