@@ -2,13 +2,13 @@
 Krita plugin that helps keep order of subwindows.
 
 ## What's new in 1.1.0:
-Features:\
+Features:
 - drag and drop backgrounder into floater or another backgrounder to swap them
 - go into split-mode by dragging a floater to left or right border of the screen
 - go into one-window mode by dragging reference window download
 - reference can be displayed on the left or right part of the screen
 
-Bugfixes:\
+Bugfixes:
 - pressing minimize on maximized window makes it impossible to demaximize (such document have to be saved and closed)
 - minimized window won't be automatically put in the background, if the background one gets closed.
 - opening new window don't work when background window is maximized (split mode)
