@@ -9,12 +9,10 @@ from .subWindowFilterBackground import subWindowFilterBackground
 from .subWindowFilterFloater import subWindowFilterFloater
 from .subWindowFilterAll import subWindowFilterAll
 
+from .config import *
+
 class resizer:
 	#user customization
-	defaultColumnRatio = 0.33 #as part of the workspace width
-	minimalColumnWidth = 100 #in pixels
-	defaultFloatingSize = QSize(500,300) #size of newly created window
-	snapDistance = 30
 
 	def __init__(self, qwin):
 		self.activeSubwin = None #main canvas for drawing
@@ -25,6 +23,7 @@ class resizer:
 
 		self.mdiArea = self.qWin.centralWidget().findChild(QMdiArea)
 		self.views = len(self.mdiArea.subWindowList()) #0 on start - amount of opened subwindows
+		self.refPosition = REFPOSITION
 
 		self.mdiAreaFilter = mdiAreaFilter(self)
 		self.mdiArea.installEventFilter(self.mdiAreaFilter)
@@ -42,11 +41,11 @@ class resizer:
 		x = subwindow.pos().x()
 		y = subwindow.pos().y()
 
-		if x < self.snapDistance : x = 0
-		if y < self.snapDistance: y = 0
-		if x + subwindow.width() > self.mdiArea.width() - self.snapDistance:
+		if x < SNAPDISTANCE : x = 0
+		if y < SNAPDISTANCE: y = 0
+		if x + subwindow.width() > self.mdiArea.width() - SNAPDISTANCE:
 			x = self.mdiArea.width() - subwindow.width()
-		if y + subwindow.height() > self.mdiArea.height() - self.snapDistance:
+		if y + subwindow.height() > self.mdiArea.height() - SNAPDISTANCE:
 			y = self.mdiArea.height() - subwindow.height()
 
 		subwindow.move(x, y)
@@ -57,7 +56,7 @@ class resizer:
 		else:
 			self.activeSubwin = self.mdiArea.activeSubWindow()
 		if self.activeSubwin != None: #bugfix - when multiple windows are closed at once, it can get here with both views deleted
-			self.activeSubwin.setMinimumWidth(self.minimalColumnWidth)
+			self.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 			self.activeSubwin.installEventFilter(self.subWindowFilterBackground)
 
 	def getOtherSubwin(self):
@@ -65,7 +64,7 @@ class resizer:
 			if subwindow != self.activeSubwin:
 				self.otherSubwin = subwindow
 				break
-		self.otherSubwin.setMinimumWidth(self.minimalColumnWidth)
+		self.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 		self.columnWidth = self.otherSubwin.width()
 		self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
 
@@ -84,14 +83,29 @@ class resizer:
 			if self.refNeeded and self.activeSubwin != None and self.otherSubwin != None and (not current.isMaximized()): #two split windows
 				if checkSizeChange == True:
 					checkSizeChanges(self)
-				self.otherSubwin.move(0,0)
-				self.otherSubwin.resize(self.columnWidth, self.mdiArea.height())
-				self.activeSubwin.move(self.columnWidth, 0)
-				self.activeSubwin.resize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
+
+				self.getBackgroundSizes()
+				self.otherSubwin.move(self.otherPos)
+				self.otherSubwin.resize(self.otherSize)
+				self.activeSubwin.move(self.activePos)
+				self.activeSubwin.resize(self.activeSize)
 
 			if (not self.refNeeded) and self.activeSubwin != None: #one window on whole workspace
 				self.activeSubwin.move(0,0)
 				self.activeSubwin.resize(self.mdiArea.size())
+
+	def getBackgroundSizes(self):
+		if self.refPosition == "left":
+			self.otherPos = QPoint(0,0)
+			self.otherSize = QSize(self.columnWidth, self.mdiArea.height())
+			self.activePos = QPoint(self.columnWidth, 0)
+			self.activeSize = QSize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
+
+		elif self.refPosition == "right":
+			self.otherPos = QPoint(int(self.mdiArea.width()-self.columnWidth), 0)
+			self.otherSize = QSize(self.columnWidth, self.mdiArea.height())
+			self.activePos = QPoint(0,0)
+			self.activeSize = QSize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
 
 	#switch between 'split mode' and 'one window' mode
 	def userToggleMode(self):
@@ -105,7 +119,7 @@ class resizer:
 				self.otherSubwin.removeEventFilter(self.subWindowFilterBackground) #no longer one of the two main windows
 				self.otherSubwin.installEventFilter(self.subWindowFilterFloater)
 				self.otherSubwin.move(0,0)
-				self.otherSubwin.resize(self.defaultFloatingSize)
+				self.otherSubwin.resize(DEFAULTFLOATERSIZE)
 				self.toggleAlwaysOnTop(self.otherSubwin, True) #turn on
 				self.otherSubwin = None
 
@@ -115,30 +129,32 @@ class resizer:
 			if self.views >= 2:
 				current = self.mdiArea.activeSubWindow()
 				if current != self.activeSubwin:
-					self.otherSubwin = self.mdiArea.activeSubWindow()
+					if current.isMinimized(): current.showNormal()
+					self.otherSubwin = current
+					self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
 				else:
 					self.getOtherSubwin()
 				self.columnWidth = self.otherSubwin.width()
-				self.otherSubwin.resize(int(self.defaultColumnRatio*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
+				self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
 				self.toggleAlwaysOnTop(self.otherSubwin, False) #turn off
 
 	def switchBackgroundWindows(self):
+		self.otherSubwin.resize(self.activeSubwin.size())
+
 		temp = self.otherSubwin
 		self.otherSubwin = self.activeSubwin
 		self.activeSubwin = temp
 
 		self.mdiArea.setActiveSubWindow(self.activeSubwin)
-		self.columnWidth = self.otherSubwin.width()
-		self.otherSubwin.resize(int(self.defaultColumnRatio*self.mdiArea.width()), self.mdiArea.height())
 
 	def switchBackgroundAndFloater(self, background, floater):
+		if floater.isMinimized(): floater.showNormal()
 		floaterPos = copy(floater.pos()) #resize and move both
 		floaterSize = copy(floater.size())
 
 		floater.removeEventFilter(self.subWindowFilterFloater)
 		floater.installEventFilter(self.subWindowFilterBackground)
 		self.toggleAlwaysOnTop(floater, False)
-		print("shouldBeNow")
 
 		if background == self.activeSubwin: #the only way it works well
 			floater.move(self.activeSubwin.pos())
@@ -156,18 +172,12 @@ class resizer:
 
 		temp.removeEventFilter(self.subWindowFilterBackground)
 		temp.installEventFilter(self.subWindowFilterFloater)
-		print(floaterPos, floaterSize)
+
 		temp.resize(floaterSize)
 		temp.move(floaterPos)
 		self.toggleAlwaysOnTop(temp, True)
 
 	def userToggleSubwindow(self):
-
-		# current = None
-		# for subwindow in self.mdiArea.subWindowList():
-		# 	if subwindow.underMouse():
-		# 		current = subwindow
-		# if current == None: current = self.mdiArea.activeSubWindow()
 
 		self.activeSubwin.showNormal() #those help if user toggled overridden minimize button on main windows
 		if self.otherSubwin != None: self.otherSubwin.showNormal() 

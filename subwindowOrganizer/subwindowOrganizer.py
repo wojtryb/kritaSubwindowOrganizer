@@ -44,6 +44,7 @@ class SubwindowOrganizer(Extension):
 			action.setCheckable(True)
 			action.setChecked(self.splitScreenChecked)
 			action.toggled.connect(self.splitScreenSetup)
+
 		else:
 			msg = QMessageBox()
 			msg.setText("Subwindow organizer plugin requires the multiple document mode to be set to 'subwindows', not 'tabs'. \n\n" +
