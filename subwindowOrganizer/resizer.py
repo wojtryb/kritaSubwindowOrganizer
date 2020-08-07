@@ -23,6 +23,7 @@ class resizer:
 
 		self.mdiArea = self.qWin.centralWidget().findChild(QMdiArea)
 		self.views = len(self.mdiArea.subWindowList()) #0 on start - amount of opened subwindows
+		self.refPosition = REFPOSITION
 
 		self.mdiAreaFilter = mdiAreaFilter(self)
 		self.mdiArea.installEventFilter(self.mdiAreaFilter)
@@ -94,13 +95,13 @@ class resizer:
 				self.activeSubwin.resize(self.mdiArea.size())
 
 	def getBackgroundSizes(self):
-		if REFPOSITION == "left":
+		if self.refPosition == "left":
 			self.otherPos = QPoint(0,0)
 			self.otherSize = QSize(self.columnWidth, self.mdiArea.height())
 			self.activePos = QPoint(self.columnWidth, 0)
 			self.activeSize = QSize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
 
-		elif REFPOSITION == "right":
+		elif self.refPosition == "right":
 			self.otherPos = QPoint(int(self.mdiArea.width()-self.columnWidth), 0)
 			self.otherSize = QSize(self.columnWidth, self.mdiArea.height())
 			self.activePos = QPoint(0,0)
@@ -146,11 +147,6 @@ class resizer:
 
 		self.mdiArea.setActiveSubWindow(self.activeSubwin)
 
-
-		# self.columnWidth = self.otherSubwin.width()
-		print("switch")
-		# self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height())
-
 	def switchBackgroundAndFloater(self, background, floater):
 		if floater.isMinimized(): floater.showNormal()
 		floaterPos = copy(floater.pos()) #resize and move both
@@ -176,18 +172,12 @@ class resizer:
 
 		temp.removeEventFilter(self.subWindowFilterBackground)
 		temp.installEventFilter(self.subWindowFilterFloater)
-		print(floaterPos, floaterSize)
+
 		temp.resize(floaterSize)
 		temp.move(floaterPos)
 		self.toggleAlwaysOnTop(temp, True)
 
 	def userToggleSubwindow(self):
-
-		# current = None
-		# for subwindow in self.mdiArea.subWindowList():
-		# 	if subwindow.underMouse():
-		# 		current = subwindow
-		# if current == None: current = self.mdiArea.activeSubWindow()
 
 		self.activeSubwin.showNormal() #those help if user toggled overridden minimize button on main windows
 		if self.otherSubwin != None: self.otherSubwin.showNormal() 

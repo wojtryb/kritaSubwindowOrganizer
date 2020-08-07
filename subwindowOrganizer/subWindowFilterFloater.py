@@ -1,27 +1,44 @@
 from krita import *
+from .config import *
 
 #event catcher for floating windows
 class subWindowFilterFloater(QMdiSubWindow):
 	def __init__(self, resizer, parent=None):
 		super().__init__(parent)
 		self.resizer = resizer
+		self.resizeBool = False
 		self.cursor = None
 		self.switchingInProgress = False
 	def eventFilter(self, obj, e):
-		if e.type() == QEvent.MouseButtonRelease:
+		if e.type() == QEvent.MouseButtonPress:
+			cursorLocal = e.pos() #cursor in relation to window 
+			if -25 < cursorLocal.x() < 25 or obj.width()-25 < cursorLocal.x() < obj.width()+25 \
+			or -3 < cursorLocal.y() < 3 or obj.height()-25 < cursorLocal.y() < obj.height()+25: #it is a resizeBool, not move
+				self.resizeBool = True
+			else:
+				self.resizeBool = False
+
+		elif e.type() == QEvent.MouseButtonRelease:
 			self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos())
 
-		elif e.type() == QEvent.Move: #snap to border when floater moves
-			print(self.cursor.x())
-			if self.cursor != None and not self.resizer.refNeeded and self.cursor.x() < 5: # going into split mode
+		elif e.type() == QEvent.Move: 
+			if self.cursor != None and not self.resizer.refNeeded and not self.resizeBool and (self.cursor.x() < 5 or self.cursor.x() > self.resizer.mdiArea.width() - 5): # going into split mode
+
+				if self.cursor.x() < 5: #left edge
+					self.resizer.refPosition = "left"
+				else:
+					self.resizer.refPosition = "right"
+
 				h = self.resizer.mdiArea.height()
-				if 0.3 * h < self.cursor.y() < 0.6 * h:
+				if SPLITMODERANGE[0] * h < self.cursor.y() < SPLITMODERANGE[1] * h:
 					self.switchingInProgress = True
-					self.resizer.userToggleMode()
+					# self.resizer.userToggleMode()
+					Application.action("splitScreen").trigger()
 					self.switchingInProgress = False
+					self.cursor = None
 					return True
 
-			self.resizer.snapToBorder(obj)
+			self.resizer.snapToBorder(obj) #snap to border when floater moves
 
 		return False
  

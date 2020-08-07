@@ -31,7 +31,6 @@ class mdiAreaFilter(QMdiArea):
 		return False
 
 
-
 	#-----------FUNCTIONS----------#
 	#each time when subwindow is closed
 	def viewClosedEvent(self, resizer):
