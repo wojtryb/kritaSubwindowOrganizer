@@ -94,6 +94,33 @@ class resizer:
 				self.activeSubwin.move(0,0)
 				self.activeSubwin.resize(self.mdiArea.size())
 
+	def resizeFloater(self, floater, pyFloater = None):
+		if DEFAULTFLOATERSIZE != None:
+				# pyfloater = Application.activeDocument()
+			# else: 
+			if pyFloater == None:
+				floater.activateWindow()
+				pyFloater = Application.activeWindow().activeView().document()
+
+			if type(DEFAULTFLOATERSIZE) == int:
+				ratio = pyFloater.width()/pyFloater.height()
+				width = int((DEFAULTFLOATERSIZE*ratio)**0.5)
+				height = int(width/ratio)
+
+			elif DEFAULTFLOATERSIZE[0] == 0:
+				height = DEFAULTFLOATERSIZE[1]
+				width = pyFloater.width()/pyFloater.height() * height
+
+			elif DEFAULTFLOATERSIZE[1] == 0:
+				width = DEFAULTFLOATERSIZE[0]
+				height = pyFloater.height()/pyFloater.width() * width
+
+			else:
+				width = DEFAULTFLOATERSIZE[0]
+				height = DEFAULTFLOATERSIZE[1]
+
+			floater.resize(width, height + 25)
+
 	def getBackgroundSizes(self):
 		if self.refPosition == "left":
 			self.otherPos = QPoint(0,0)
@@ -118,8 +145,10 @@ class resizer:
 			if self.otherSubwin != None:
 				self.otherSubwin.removeEventFilter(self.subWindowFilterBackground) #no longer one of the two main windows
 				self.otherSubwin.installEventFilter(self.subWindowFilterFloater)
+				
 				self.otherSubwin.move(0,0)
-				self.otherSubwin.resize(DEFAULTFLOATERSIZE)
+				# self.otherSubwin.resize(DEFAULTFLOATERSIZE)
+				self.resizeFloater(self.otherSubwin, None)
 				self.toggleAlwaysOnTop(self.otherSubwin, True) #turn on
 				self.otherSubwin = None
 

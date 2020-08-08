@@ -72,6 +72,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 						self.resizer.switchBackgroundAndFloater(self.resizer.activeSubwin, subwindow)
 					else:
 						self.resizer.switchBackgroundAndFloater(self.resizer.otherSubwin, subwindow)
+					self.resizer.resizeFloater(obj)
 					return True
 		return False
 

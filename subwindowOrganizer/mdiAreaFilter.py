@@ -69,6 +69,8 @@ class mdiAreaFilter(QMdiArea):
 		
 		resizer.moveSubwindows()
 
+
+
 	#each time when subwindow is opened
 	def viewOpenedEvent(self, resizer):
 
@@ -96,7 +98,12 @@ class mdiAreaFilter(QMdiArea):
 		if (resizer.views >= 3 and resizer.refNeeded) or (resizer.views >= 2 and (not resizer.refNeeded)): #open as floating window
 			newSubwindow.installEventFilter(resizer.subWindowFilterFloater)
 			resizer.toggleAlwaysOnTop(newSubwindow, True)
-			newSubwindow.resize(DEFAULTFLOATERSIZE)
+			# newSubwindow.resize(DEFAULTFLOATERSIZE)
+			# newSubwindow.activateWindow()
+			pyNewSubwindow = Application.views()[-1].document()
+			self.resizer.resizeFloater(newSubwindow, pyNewSubwindow)
+
+
 
 		resizer.moveSubwindows()
 
