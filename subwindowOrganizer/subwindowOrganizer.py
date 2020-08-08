@@ -18,6 +18,9 @@ class SubwindowOrganizer(Extension):
 	def splitScreen(self):
 		self.extension.userToggleMode()
 
+	def openOverview(self):
+		self.extension.userOpenOverview()
+		
 	def setup(self):
 		if Application.readSetting("SubwindowOrganizer", "splitScreen", "true") == "true":
 			self.splitScreenChecked = True
@@ -25,7 +28,8 @@ class SubwindowOrganizer(Extension):
 	def splitScreenSetup(self, toggled):
 		Application.writeSetting("SubwindowOrganizer", "splitScreen", str(toggled).lower())
 		self.splitScreen = toggled
-		
+
+
 	def createActions(self, window):
 		if Application.readSetting("", "mdi_viewmode", "1") == "0":
 			qwin = window.qwindow() 
@@ -33,6 +37,9 @@ class SubwindowOrganizer(Extension):
 
 			pickSubwindow = window.createAction("pickSubwindow", "Pick subwindow", "view")
 			pickSubwindow.triggered.connect(self.pickSubwindow)
+
+			openOverview = window.createAction("openOverview", "Open canvas overview", "view")
+			openOverview.triggered.connect(self.openOverview)
 
 			#split screen actions
 			action = window.createAction("splitScreenSetup", "", "")

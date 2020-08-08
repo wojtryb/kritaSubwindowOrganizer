@@ -96,12 +96,10 @@ class resizer:
 
 	def resizeFloater(self, floater, pyFloater = None):
 		if DEFAULTFLOATERSIZE != None:
-				# pyfloater = Application.activeDocument()
-			# else: 
 			if pyFloater == None:
 				floater.activateWindow()
 				pyFloater = Application.activeWindow().activeView().document()
-
+				
 			if type(DEFAULTFLOATERSIZE) == int:
 				ratio = pyFloater.width()/pyFloater.height()
 				width = int((DEFAULTFLOATERSIZE*ratio)**0.5)
@@ -175,6 +173,12 @@ class resizer:
 		self.activeSubwin = temp
 
 		self.mdiArea.setActiveSubWindow(self.activeSubwin)
+
+	def userOpenOverview(self):
+		self.mdiArea.setActiveSubWindow(self.activeSubwin)
+		doc = Application.activeDocument()
+		Application.activeWindow().addView(doc)
+		Application.action("softProof").trigger()
 
 	def switchBackgroundAndFloater(self, background, floater):
 		if floater.isMinimized(): floater.showNormal()

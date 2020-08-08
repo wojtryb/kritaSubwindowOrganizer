@@ -72,7 +72,26 @@ class subWindowFilterBackground(QMdiSubWindow):
 						self.resizer.switchBackgroundAndFloater(self.resizer.activeSubwin, subwindow)
 					else:
 						self.resizer.switchBackgroundAndFloater(self.resizer.otherSubwin, subwindow)
+					
+					x = obj.pos().x()
+					y = obj.pos().y()
+					sX = obj.width()
+					sY = obj.height()
 					self.resizer.resizeFloater(obj)
+					sX -= obj.width()
+					sY -= obj.height()
+
+					print(sX, sY)
+
+					#snapping to border, if got smaller and was on bottom or right
+					if x > self.resizer.mdiArea.width() - obj.width() - x: #closer to the right border of canvas than left one
+						print("1")
+						x += sX #self.resizer.mdiArea.width() - sX
+					if y > self.resizer.mdiArea.height() - obj.height() - y: #closer to the right border of canvas than left one
+						print("2")
+						y += sY #self.resizer.mdiArea.height() - sY
+					obj.move(x, y)
+
 					return True
 		return False
 
@@ -88,7 +107,6 @@ class subWindowFilterBackground(QMdiSubWindow):
 	def enterOneWindowMode(self, obj):
 		if self.resizer.refNeeded and obj == self.resizer.otherSubwin and self.cursor.y() > 200 \
 		and 0 < self.cursor.x() < self.resizer.mdiArea.width() and 0 < self.cursor.y() < self.resizer.mdiArea.height(): #in mdiArea
-			# self.resizer.userToggleMode()
 			Application.action("splitScreen").trigger()
 			return True
 		return False
