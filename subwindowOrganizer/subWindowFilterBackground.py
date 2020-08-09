@@ -67,7 +67,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 	def swapFloaters(self, obj):
 		for subwindow in self.resizer.mdiArea.subWindowList(): #swapping with floaters
 			if self.isUnderMouse(subwindow, self.cursor) and subwindow != obj:
-				if subwindow != self.resizer.activeSubwin and subwindow != self.resizer.otherSubwin: #other floater, swap with it
+				if subwindow != self.resizer.activeSubwin and subwindow != self.resizer.otherSubwin and not subwindow.isMinimized(): #other floater, swap with it
 					if obj == self.resizer.activeSubwin:
 						self.resizer.switchBackgroundAndFloater(self.resizer.activeSubwin, subwindow)
 					else:
@@ -105,8 +105,8 @@ class subWindowFilterBackground(QMdiSubWindow):
 		return False
 
 	def enterOneWindowMode(self, obj):
-		if self.resizer.refNeeded and obj == self.resizer.otherSubwin and self.cursor.y() > 200 \
-		and 0 < self.cursor.x() < self.resizer.mdiArea.width() and 0 < self.cursor.y() < self.resizer.mdiArea.height(): #in mdiArea
+		if self.resizer.refNeeded and obj == self.resizer.otherSubwin and 200 < self.cursor.y() < self.resizer.mdiArea.height() - 10 \
+		and 5 < self.cursor.x() < self.resizer.mdiArea.width() - 5: #in mdiArea
 			Application.action("splitScreen").trigger()
 			return True
 		return False

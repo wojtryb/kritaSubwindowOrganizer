@@ -52,6 +52,8 @@ class SubwindowOrganizer(Extension):
 			action.setChecked(self.splitScreenChecked)
 			action.toggled.connect(self.splitScreenSetup)
 
+			# Application.action('windows_cascade').setDisabled(True)
+
 		else:
 			msg = QMessageBox()
 			msg.setText("Subwindow organizer plugin requires the multiple document mode to be set to 'subwindows', not 'tabs'. \n\n" +

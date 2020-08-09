@@ -74,6 +74,10 @@ class mdiAreaFilter(QMdiArea):
 	#each time when subwindow is opened
 	def viewOpenedEvent(self, resizer):
 
+		Application.action('windows_cascade').setVisible(False) #best I can do about it for now
+		Application.action('windows_tile').setVisible(False)
+		# Application.action('windows_cascade').setEnabled(False)
+
 		resizer.views = len(resizer.mdiArea.subWindowList())
 		current = resizer.mdiArea.activeSubWindow()
 
@@ -83,6 +87,9 @@ class mdiAreaFilter(QMdiArea):
 		#event catcher for every window, never removed 
 		newSubwindow = resizer.mdiArea.subWindowList()[-1]
 		newSubwindow.installEventFilter(resizer.subWindowFilterAll)
+
+		menu = newSubwindow.children()[0]
+		menu.actions()[5].setVisible(False)
 
 		if resizer.views == 1:
 			resizer.getActiveSubwin()

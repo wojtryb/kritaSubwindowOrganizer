@@ -36,6 +36,8 @@ class resizer:
 		menu = subwindow.children()[0]
 		if menu.actions()[5].isChecked() ^ check:
 			menu.actions()[5].trigger()
+			
+		menu.actions()[5].setVisible(False)
 
 	def snapToBorder(self, subwindow):
 		x = subwindow.pos().x()
