@@ -36,7 +36,7 @@ class resizer:
 		menu = subwindow.children()[0]
 		if menu.actions()[5].isChecked() ^ check:
 			menu.actions()[5].trigger()
-			
+
 		menu.actions()[5].setVisible(False)
 
 	def snapToBorder(self, subwindow):
@@ -60,6 +60,8 @@ class resizer:
 		if self.activeSubwin != None: #bugfix - when multiple windows are closed at once, it can get here with both views deleted
 			self.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 			self.activeSubwin.installEventFilter(self.subWindowFilterBackground)
+			#WARNING: Line below not fully tested
+			self.toggleAlwaysOnTop(self.activeSubwin, False)
 
 	def getOtherSubwin(self):
 		for subwindow in self.mdiArea.subWindowList():
@@ -69,6 +71,8 @@ class resizer:
 		self.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 		self.columnWidth = self.otherSubwin.width()
 		self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
+		#WARNING: Line below not fully tested
+		self.toggleAlwaysOnTop(self.otherSubwin, False)
 
 	#window react to change in workspace size or adjust to changed size of the other 
 	def moveSubwindows(self, checkSizeChange = True):
@@ -166,6 +170,51 @@ class resizer:
 				self.columnWidth = self.otherSubwin.width()
 				self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
 				self.toggleAlwaysOnTop(self.otherSubwin, False) #turn off
+
+	def userTurnOff(self):
+		for subwindow in self.mdiArea.subWindowList():
+			subwindow.removeEventFilter(self.subWindowFilterAll)
+			subwindow.removeEventFilter(self.subWindowFilterFloater)
+			subwindow.removeEventFilter(self.subWindowFilterBackground)
+
+			menu = subwindow.children()[0]
+			menu.actions()[5].setVisible(True)
+
+		Application.action('windows_cascade').setVisible(True)
+		Application.action('windows_tile').setVisible(True)
+
+		self.activeSubwin = None
+		self.otherSubwin = None
+
+		if not sip.isdeleted(self.mdiAreaFilter): del self.mdiAreaFilter
+			
+	def userTurnOn(self):
+		self.mdiAreaFilter = mdiAreaFilter(self)
+
+		Application.action('windows_cascade').setVisible(False)
+		Application.action('windows_tile').setVisible(False)
+
+		self.views = len(self.mdiArea.subWindowList())
+
+		if self.views >= 1:
+			self.getActiveSubwin()
+		if self.views >= 2:
+			self.getOtherSubwin()
+		for subwindow in self.mdiArea.subWindowList():
+			subwindow.installEventFilter(self.subWindowFilterAll)
+			menu = subwindow.children()[0]
+			menu.actions()[5].setVisible(False)
+
+			if subwindow not in [self.activeSubwin, self.otherSubwin]:
+				subwindow.installEventFilter(self.subWindowFilterFloater)
+				self.toggleAlwaysOnTop(subwindow, True)
+
+		if self.views >= 1:	
+			self.moveSubwindows()
+
+
+
+
 
 	def switchBackgroundWindows(self):
 		self.otherSubwin.resize(self.activeSubwin.size())

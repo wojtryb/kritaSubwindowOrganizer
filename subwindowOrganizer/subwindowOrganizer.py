@@ -20,7 +20,13 @@ class SubwindowOrganizer(Extension):
 
 	def openOverview(self):
 		self.extension.userOpenOverview()
-		
+	
+	def turnOff(self):
+		self.extension.userTurnOff()
+
+	def turnOn(self):
+		self.extension.userTurnOn()		
+
 	def setup(self):
 		if Application.readSetting("SubwindowOrganizer", "splitScreen", "true") == "true":
 			self.splitScreenChecked = True
@@ -51,6 +57,12 @@ class SubwindowOrganizer(Extension):
 			action.setCheckable(True)
 			action.setChecked(self.splitScreenChecked)
 			action.toggled.connect(self.splitScreenSetup)
+
+			turnOff = window.createAction("turnOff", "turnOff", "view")
+			turnOff.triggered.connect(self.turnOff)
+
+			turnOn = window.createAction("turnOn", "turnOn", "view")
+			turnOn.triggered.connect(self.turnOn)
 
 			# Application.action('windows_cascade').setDisabled(True)
 
