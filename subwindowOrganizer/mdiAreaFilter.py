@@ -74,7 +74,7 @@ class mdiAreaFilter(QMdiArea):
 	#each time when subwindow is opened
 	def viewOpenedEvent(self, resizer):
 
-		Application.action('windows_cascade').setVisible(False) #best I can do about it for now
+		Application.action('windows_cascade').setVisible(False) #still could be toggled with keyboard shortcut, but it should do
 		Application.action('windows_tile').setVisible(False)
 		# Application.action('windows_cascade').setEnabled(False)
 

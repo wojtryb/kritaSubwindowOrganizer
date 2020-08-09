@@ -14,7 +14,7 @@ from .config import *
 class resizer:
 	#user customization
 
-	def __init__(self, qwin):
+	def __init__(self, qwin, isToggled):
 		self.activeSubwin = None #main canvas for drawing
 		self.otherSubwin = None #second main canvas for reference and overview
 		self.refNeeded = False #extension mode: 'split screen'(False) and 'one window'(True) 
@@ -25,8 +25,9 @@ class resizer:
 		self.views = len(self.mdiArea.subWindowList()) #0 on start - amount of opened subwindows
 		self.refPosition = REFPOSITION
 
-		self.mdiAreaFilter = mdiAreaFilter(self)
-		self.mdiArea.installEventFilter(self.mdiAreaFilter)
+		if isToggled: self.mdiAreaFilter = mdiAreaFilter(self) #cant be created on a start if the plugin should be off
+		# print("filter installed")
+		# self.mdiArea.installEventFilter(self.mdiAreaFilter)
 
 		self.subWindowFilterBackground = subWindowFilterBackground(self) #installation on subwindows happens later
 		self.subWindowFilterFloater = subWindowFilterFloater(self)
@@ -180,8 +181,8 @@ class resizer:
 			menu = subwindow.children()[0]
 			menu.actions()[5].setVisible(True)
 
-		Application.action('windows_cascade').setVisible(True)
-		Application.action('windows_tile').setVisible(True)
+		if (action := Application.action('windows_cascade')) != None: action.setVisible(True)
+		if (action := Application.action('windows_tile')) != None: action.setVisible(True)
 
 		self.activeSubwin = None
 		self.otherSubwin = None
@@ -191,14 +192,17 @@ class resizer:
 	def userTurnOn(self):
 		self.mdiAreaFilter = mdiAreaFilter(self)
 
-		Application.action('windows_cascade').setVisible(False)
-		Application.action('windows_tile').setVisible(False)
+		if (action := Application.action('windows_cascade')) != None: action.setVisible(False)
+		if (action := Application.action('windows_tile')) != None: action.setVisible(False)
+
+		# Application.action('windows_cascade').setVisible(False)
+		# Application.action('windows_tile').setVisible(False)
 
 		self.views = len(self.mdiArea.subWindowList())
 
 		if self.views >= 1:
 			self.getActiveSubwin()
-		if self.views >= 2:
+		if self.views >= 2 and self.refNeeded:
 			self.getOtherSubwin()
 		for subwindow in self.mdiArea.subWindowList():
 			subwindow.installEventFilter(self.subWindowFilterAll)
@@ -211,10 +215,6 @@ class resizer:
 
 		if self.views >= 1:	
 			self.moveSubwindows()
-
-
-
-
 
 	def switchBackgroundWindows(self):
 		self.otherSubwin.resize(self.activeSubwin.size())
