@@ -4,16 +4,6 @@ from PyQt5.QtWidgets import QMessageBox
 from .resizer import resizer
 
 
-class kritaWindow(QObject):
-	def __init__(self, parent=None):
-		super().__init__(parent)
-	def eventFilter(self, obj, e):
-		if e.type() == QEvent.WindowBlocked:
-			print("block")
-		elif e.type() == QEvent.WindowUnblocked:
-			print("unblock")
-		return False
-
 class SubwindowOrganizer(Extension):
 	# organizerToggleChecked = False
 	isToggled = False
@@ -68,17 +58,10 @@ class SubwindowOrganizer(Extension):
 		self.settingsNotifier.setActive(True)
 		self.settingsNotifier.configurationChanged.connect(self.settingsChangedEvent)
 
-
-
-	# def settingsOpenedEvent(self):
-	# 	print("settings opened")
-
 	def settingsChangedEvent(self):
-		print("settings closed")
 		if Application.readSetting("", "mdi_viewmode", "1") == "0": newMode = True
 		else: newMode = False
 
-		# if not self.inProgress:
 		if self.kritaWindowsMode ^ newMode: #mode was changed in krita settings
 			self.kritaWindowsMode = newMode
 			if self.kritaWindowsMode: #changed from tabs to subwindows
@@ -91,18 +74,11 @@ class SubwindowOrganizer(Extension):
 			else: #mode changed from subwindows to tab
 				self.organizerToggleAction.setVisible(False)
 				if self.isToggled: #addon was on
-					# print("TOGGLIGN")
-					Application.writeSetting("", "mdi_viewmode", "0")
-					self.kritaWindowsMode = True
-					self.organizerToggleAction.setVisible(True)
-					# self.extension.userTurnOff()
-					# self.pickSubwindowAction.setVisible(False)
-					# self.openOverviewAction.setVisible(False)
-					# self.splitScreenToggleAction.setVisible(False)
-					# self.organizerToggleAction.setVisible(False)
-					# self.extension.fixTabs()
-					# Application.writeSetting("", "mdi_viewmode", "1")
-
+					self.extension.userTurnOff()
+					self.pickSubwindowAction.setVisible(False)
+					self.openOverviewAction.setVisible(False)
+					self.splitScreenToggleAction.setVisible(False)
+					self.organizerToggleAction.setVisible(False)
 
 	def createActions(self, window):
 		qwin = window.qwindow() 
@@ -116,9 +92,9 @@ class SubwindowOrganizer(Extension):
 		self.organizerToggleAction.setVisible(self.kritaWindowsMode)
 
 		self.splitScreenToggleAction = window.createAction("splitScreen", "Split screen", "view")
+		self.splitScreenToggleAction.toggled.connect(self.splitScreen) #in this case we want it to be executed at the beginning
 		self.splitScreenToggleAction.setCheckable(True)
 		self.splitScreenToggleAction.setChecked(self.splitScreenChecked)
-		self.splitScreenToggleAction.toggled.connect(self.splitScreen)
 		self.splitScreenToggleAction.setVisible(toggleAtStart)
 
 		self.pickSubwindowAction = window.createAction("pickSubwindow", "Pick subwindow", "view")
@@ -128,9 +104,5 @@ class SubwindowOrganizer(Extension):
 		self.openOverviewAction = window.createAction("openOverview", "Open canvas overview", "view")
 		self.openOverviewAction.triggered.connect(self.openOverview)
 		self.openOverviewAction.setVisible(toggleAtStart)
-
-		self.kritaFilter = kritaWindow()
-		window.qwindow().installEventFilter(self.kritaFilter)
-		# window.qwindow().menuBar().
 
 Krita.instance().addExtension(SubwindowOrganizer(Krita.instance()))

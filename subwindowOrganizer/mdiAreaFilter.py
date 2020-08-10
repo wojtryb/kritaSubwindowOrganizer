@@ -24,22 +24,23 @@ class mdiAreaFilter(QMdiArea):
 		# self.actionFilter = actionFilter()
 
 	def eventFilter(self, obj, e):
-		if not sip.isdeleted(self.resizer.mdiArea):
-			if e.type() == QEvent.Resize:
-				self.resizer.moveSubwindows()
-				self.moveFloatersOnAreaChange(self.resizer) #move floaters
-				self.sizeBefore = [self.resizer.mdiArea.width(), self.resizer.mdiArea.height()] #changes done, can actualize width and height of workspace
+		if Application.readSetting("", "mdi_viewmode", "1") == "0":
+			if not sip.isdeleted(self.resizer.mdiArea):
+				if e.type() == QEvent.Resize:
+					self.resizer.moveSubwindows()
+					self.moveFloatersOnAreaChange(self.resizer) #move floaters
+					self.sizeBefore = [self.resizer.mdiArea.width(), self.resizer.mdiArea.height()] #changes done, can actualize width and height of workspace
 
-			#there are many more events, as subwindows aren't the only children, so the change have to be found as change in list size
-			if e.type() == QEvent.ChildAdded:
-				if self.resizer.views < len(self.resizer.mdiArea.subWindowList()):
-					self.viewOpenedEvent(self.resizer)
-					self.resizer.views = len(self.resizer.mdiArea.subWindowList())
+				#there are many more events, as subwindows aren't the only children, so the change have to be found as change in list size
+				if e.type() == QEvent.ChildAdded:
+					if self.resizer.views < len(self.resizer.mdiArea.subWindowList()):
+						self.viewOpenedEvent(self.resizer)
+						self.resizer.views = len(self.resizer.mdiArea.subWindowList())
 
-			if e.type() == QEvent.ChildRemoved:
-				if self.resizer.views > len(self.resizer.mdiArea.subWindowList()):
-					self.viewClosedEvent(self.resizer)
-					self.resizer.views = len(self.resizer.mdiArea.subWindowList())
+				if e.type() == QEvent.ChildRemoved:
+					if self.resizer.views > len(self.resizer.mdiArea.subWindowList()):
+						self.viewClosedEvent(self.resizer)
+						self.resizer.views = len(self.resizer.mdiArea.subWindowList())
 
 		return False
 

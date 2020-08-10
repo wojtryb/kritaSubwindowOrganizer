@@ -31,19 +31,10 @@ class resizer:
 		self.refPosition = REFPOSITION
 
 		if toggleAtStart: self.mdiAreaFilter = mdiAreaFilter(self) #cant be created on a start if the plugin should be off
-		# print("filter installed")
-		# self.mdiArea.installEventFilter(self.mdiAreaFilter)
 
 		self.subWindowFilterBackground = subWindowFilterBackground(self) #installation on subwindows happens later
 		self.subWindowFilterFloater = subWindowFilterFloater(self)
 		self.subWindowFilterAll = subWindowFilterAll(self)
-
-		# self.kritaWindowFilter = kritaWindow()
-		# qwin.installEventFilter(self.kritaWindowFilter)
-
-		# self.kritaWindow = kritaWindow()
-		# self.qapp = QGuiApplication.instance()
-		# self.qapp.installEventFilter(self.kritaWindow)
 
 
 	def toggleAlwaysOnTop(self, subwindow, check):
@@ -163,7 +154,6 @@ class resizer:
 			self.otherSubwin.installEventFilter(self.subWindowFilterFloater)
 			
 			self.otherSubwin.move(0,0)
-			# self.otherSubwin.resize(DEFAULTFLOATERSIZE)
 			self.resizeFloater(self.otherSubwin, None)
 			self.toggleAlwaysOnTop(self.otherSubwin, True) #turn on
 			self.otherSubwin = None
@@ -181,16 +171,6 @@ class resizer:
 			self.columnWidth = self.otherSubwin.width()
 			self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
 			self.toggleAlwaysOnTop(self.otherSubwin, False)
-
-	# def userToggleMode(self):
-
-		#into 'one window' mode
-		# if self.refNeeded:
-			
-
-		#into 'split mode'
-		# else:
-			 #turn off
 
 	def userTurnOff(self):
 		for subwindow in self.mdiArea.subWindowList():
@@ -234,15 +214,6 @@ class resizer:
 
 		if self.views >= 1:	
 			self.moveSubwindows()
-
-	def fixTabs(self):
-		for subwindow in self.mdiArea.subWindowList():
-			print(subwindow)
-			# self.mdiArea.setActiveSubWindow(subwindow)
-			# doc = Application.activeDocument()
-			# Application.activeWindow().addView(doc)
-			# subwindow.close()
-
 
 	def switchBackgroundWindows(self):
 		self.otherSubwin.resize(self.activeSubwin.size())
