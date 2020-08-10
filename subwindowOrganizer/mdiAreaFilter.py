@@ -3,12 +3,25 @@ import sip
  
 from .config import *
 
+
+
+# class actionFilter(QAction):
+# 	def __init__(self, parent=None):
+# 		super().__init__(parent)
+# 	def eventFilter(self, obj, e):
+# 		#override krita minimize and maximize actions
+# 		# if e.type() == QEvent.WindowStateChange:
+# 		print(e.type())
+# 		return False
+
 #event catcher for the workspace - changes in size, and subwindows added and removed
 class mdiAreaFilter(QMdiArea):
 	def __init__(self, resizer, parent=None):
 		super().__init__(parent)
 		self.resizer = resizer
 		self.sizeBefore = [resizer.mdiArea.width(), resizer.mdiArea.height()]
+
+		# self.actionFilter = actionFilter()
 
 	def eventFilter(self, obj, e):
 		if not sip.isdeleted(self.resizer.mdiArea):
@@ -69,14 +82,14 @@ class mdiAreaFilter(QMdiArea):
 		
 		resizer.moveSubwindows()
 
-
-
 	#each time when subwindow is opened
 	def viewOpenedEvent(self, resizer):
 
-		Application.action('windows_cascade').setVisible(False) #still could be toggled with keyboard shortcut, but it should do
+		# self.act = Application.action("options_configure")
+		# self.act.installEventFilter(self.actionFilter)
+
+		Application.action('windows_cascade').setVisible(False)
 		Application.action('windows_tile').setVisible(False)
-		# Application.action('windows_cascade').setEnabled(False)
 
 		resizer.views = len(resizer.mdiArea.subWindowList())
 		current = resizer.mdiArea.activeSubWindow()

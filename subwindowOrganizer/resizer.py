@@ -11,10 +11,15 @@ from .subWindowFilterAll import subWindowFilterAll
 
 from .config import *
 
+
+from PyQt5.QtGui import QGuiApplication
+
+
+
 class resizer:
 	#user customization
 
-	def __init__(self, qwin, isToggled):
+	def __init__(self, qwin, toggleAtStart):
 		self.activeSubwin = None #main canvas for drawing
 		self.otherSubwin = None #second main canvas for reference and overview
 		self.refNeeded = False #extension mode: 'split screen'(False) and 'one window'(True) 
@@ -25,13 +30,21 @@ class resizer:
 		self.views = len(self.mdiArea.subWindowList()) #0 on start - amount of opened subwindows
 		self.refPosition = REFPOSITION
 
-		if isToggled: self.mdiAreaFilter = mdiAreaFilter(self) #cant be created on a start if the plugin should be off
+		if toggleAtStart: self.mdiAreaFilter = mdiAreaFilter(self) #cant be created on a start if the plugin should be off
 		# print("filter installed")
 		# self.mdiArea.installEventFilter(self.mdiAreaFilter)
 
 		self.subWindowFilterBackground = subWindowFilterBackground(self) #installation on subwindows happens later
 		self.subWindowFilterFloater = subWindowFilterFloater(self)
 		self.subWindowFilterAll = subWindowFilterAll(self)
+
+		# self.kritaWindowFilter = kritaWindow()
+		# qwin.installEventFilter(self.kritaWindowFilter)
+
+		# self.kritaWindow = kritaWindow()
+		# self.qapp = QGuiApplication.instance()
+		# self.qapp.installEventFilter(self.kritaWindow)
+
 
 	def toggleAlwaysOnTop(self, subwindow, check):
 		menu = subwindow.children()[0]
@@ -104,7 +117,8 @@ class resizer:
 	def resizeFloater(self, floater, pyFloater = None):
 		if DEFAULTFLOATERSIZE != None:
 			if pyFloater == None:
-				floater.activateWindow()
+				# floater.activateWindow()
+				self.mdiArea.setActiveSubWindow(floater)
 				pyFloater = Application.activeWindow().activeView().document()
 				
 			if type(DEFAULTFLOATERSIZE) == int:
@@ -140,37 +154,43 @@ class resizer:
 			self.activeSize = QSize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
 
 	#switch between 'split mode' and 'one window' mode
-	def userToggleMode(self):
+	def userModeOneWindow(self):
+		if self.otherSubwin != None: self.otherSubwin.showNormal() #bugfix: helps if user toggled overridden minimize button on main windows
+		self.refNeeded = False
+
+		if self.otherSubwin != None:
+			self.otherSubwin.removeEventFilter(self.subWindowFilterBackground) #no longer one of the two main windows
+			self.otherSubwin.installEventFilter(self.subWindowFilterFloater)
+			
+			self.otherSubwin.move(0,0)
+			# self.otherSubwin.resize(DEFAULTFLOATERSIZE)
+			self.resizeFloater(self.otherSubwin, None)
+			self.toggleAlwaysOnTop(self.otherSubwin, True) #turn on
+			self.otherSubwin = None
+
+	def userModeSplit(self):
+		self.refNeeded = True
+		if self.views >= 2:
+			current = self.mdiArea.activeSubWindow()
+			if current != self.activeSubwin:
+				if current.isMinimized(): current.showNormal()
+				self.otherSubwin = current
+				self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
+			else:
+				self.getOtherSubwin()
+			self.columnWidth = self.otherSubwin.width()
+			self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
+			self.toggleAlwaysOnTop(self.otherSubwin, False)
+
+	# def userToggleMode(self):
 
 		#into 'one window' mode
-		if self.refNeeded:
-			if self.otherSubwin != None: self.otherSubwin.showNormal() #bugfix: helps if user toggled overridden minimize button on main windows
-			self.refNeeded = False
-
-			if self.otherSubwin != None:
-				self.otherSubwin.removeEventFilter(self.subWindowFilterBackground) #no longer one of the two main windows
-				self.otherSubwin.installEventFilter(self.subWindowFilterFloater)
-				
-				self.otherSubwin.move(0,0)
-				# self.otherSubwin.resize(DEFAULTFLOATERSIZE)
-				self.resizeFloater(self.otherSubwin, None)
-				self.toggleAlwaysOnTop(self.otherSubwin, True) #turn on
-				self.otherSubwin = None
+		# if self.refNeeded:
+			
 
 		#into 'split mode'
-		else:
-			self.refNeeded = True
-			if self.views >= 2:
-				current = self.mdiArea.activeSubWindow()
-				if current != self.activeSubwin:
-					if current.isMinimized(): current.showNormal()
-					self.otherSubwin = current
-					self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
-				else:
-					self.getOtherSubwin()
-				self.columnWidth = self.otherSubwin.width()
-				self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
-				self.toggleAlwaysOnTop(self.otherSubwin, False) #turn off
+		# else:
+			 #turn off
 
 	def userTurnOff(self):
 		for subwindow in self.mdiArea.subWindowList():
@@ -195,9 +215,6 @@ class resizer:
 		if (action := Application.action('windows_cascade')) != None: action.setVisible(False)
 		if (action := Application.action('windows_tile')) != None: action.setVisible(False)
 
-		# Application.action('windows_cascade').setVisible(False)
-		# Application.action('windows_tile').setVisible(False)
-
 		self.views = len(self.mdiArea.subWindowList())
 
 		if self.views >= 1:
@@ -208,13 +225,24 @@ class resizer:
 			subwindow.installEventFilter(self.subWindowFilterAll)
 			menu = subwindow.children()[0]
 			menu.actions()[5].setVisible(False)
+			if subwindow.isMinimized() or subwindow.isMaximized(): subwindow.showNormal()
 
 			if subwindow not in [self.activeSubwin, self.otherSubwin]:
 				subwindow.installEventFilter(self.subWindowFilterFloater)
 				self.toggleAlwaysOnTop(subwindow, True)
+				self.resizeFloater(subwindow)
 
 		if self.views >= 1:	
 			self.moveSubwindows()
+
+	def fixTabs(self):
+		for subwindow in self.mdiArea.subWindowList():
+			print(subwindow)
+			# self.mdiArea.setActiveSubWindow(subwindow)
+			# doc = Application.activeDocument()
+			# Application.activeWindow().addView(doc)
+			# subwindow.close()
+
 
 	def switchBackgroundWindows(self):
 		self.otherSubwin.resize(self.activeSubwin.size())

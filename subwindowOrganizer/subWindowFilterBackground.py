@@ -13,6 +13,9 @@ class subWindowFilterBackground(QMdiSubWindow):
 	def eventFilter(self, obj, e):
 		if e.type() == QEvent.Resize:
 			self.resizer.moveSubwindows() #update the second window
+			# TODO: changing column ratio here, not in move subwindows 
+			# if self.resizeBool:
+			# 	pass
 
 		elif e.type() == QEvent.WindowStateChange:
 			oldMinimized = False
@@ -50,6 +53,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 
 			self.resetFlags()
 			return True
+
 
 		return False
 
