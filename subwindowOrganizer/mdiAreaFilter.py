@@ -48,6 +48,9 @@ class mdiAreaFilter(QMdiArea):
 		resizer.activeSubwin = checkIfDeleted(resizer.activeSubwin)
 		resizer.otherSubwin = checkIfDeleted(resizer.otherSubwin) 
 
+		# for subwindow in resizer.mdiArea.subWindowList():
+		# 	if subwindow.isMaximized(): subwindow.showNormal()
+
 		if resizer.activeSubwin == None: #active was closed, other is the new active (only in split mode, in one window, there is no other)
 			resizer.activeSubwin = resizer.otherSubwin
 			resizer.otherSubwin = None
@@ -58,13 +61,13 @@ class mdiAreaFilter(QMdiArea):
 
 		if resizer.activeSubwin == None: # at first it was one window mode, active was closed, and nothing took its place
 			resizer.getActiveSubwin()
-			if resizer.activeSubwin != None: # closing everything at once, can cause it to be none
+			if resizer.activeSubwin != None and resizer.activeSubwin.isMinimized(): # closing everything at once, can cause it
 				resizer.activeSubwin.showMaximized() #workaround - minimized windows have problems with getting normal, so I maximize them first
 				resizer.activeSubwin.showNormal()
 
 		if resizer.views == 1:
 			resizer.activeSubwin.showMaximized() #one view is always maximized
-		
+
 		resizer.moveSubwindows() #update changes
 
 	#each time when subwindow is opened
@@ -76,8 +79,7 @@ class mdiAreaFilter(QMdiArea):
 		resizer.views = len(resizer.mdiArea.subWindowList())
 		current = resizer.mdiArea.activeSubWindow()
 
-		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH) #temporarily here, until I find a better place for it
-		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
+		
 
 		#event catcher for every window, never removed 
 		newSubwindow = resizer.mdiArea.subWindowList()[-1]

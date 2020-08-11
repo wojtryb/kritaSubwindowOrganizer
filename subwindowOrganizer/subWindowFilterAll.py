@@ -1,5 +1,7 @@
 from krita import *
 
+from .config import *
+
 #event catcher for every window - both floaters and back ones
 class subWindowFilterAll(QMdiSubWindow):
 	def __init__(self, resizer, parent=None):
@@ -23,10 +25,11 @@ class subWindowFilterAll(QMdiSubWindow):
 					self.isMaximized = False
 
 			# krita will crush if there will be a maximized window in usual close handling - it has to be made normal before it
-			if e.type() == QEvent.Close:
-				obj.showNormal()
-				self.showAll(self.resizer)
-				self.isMaximized = False
+		if e.type() == QEvent.Close: #dont seem to work anyway...
+			# print("close")
+			obj.showNormal()
+			self.showAll(self.resizer)
+			self.isMaximized = False
 
 		return False
 
@@ -36,11 +39,13 @@ class subWindowFilterAll(QMdiSubWindow):
 	def hideAllExcept(self, resizer, exception):
 		for subwindow in resizer.mdiArea.subWindowList():
 			if subwindow != exception: subwindow.hide()
-		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(0)
+		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(0) #minimal width would not allow them to hide properly
 		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(0)
 
 	#showind all hidden window, when maximized turns normal
 	def showAll(self, resizer):
 		for subwindow in resizer.mdiArea.subWindowList():
 			subwindow.show()
+		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH) #getting minimal width again
+		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
  

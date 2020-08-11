@@ -36,7 +36,6 @@ class resizer:
 		self.subWindowFilterFloater = subWindowFilterFloater(self)
 		self.subWindowFilterAll = subWindowFilterAll(self)
 
-
 	def toggleAlwaysOnTop(self, subwindow, check):
 		menu = subwindow.children()[0]
 		if menu.actions()[5].isChecked() ^ check:
