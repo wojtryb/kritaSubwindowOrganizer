@@ -10,14 +10,13 @@ class mdiAreaFilter(QMdiArea):
 		self.resizer = resizer
 		self.sizeBefore = [resizer.mdiArea.width(), resizer.mdiArea.height()]
 
-		# self.actionFilter = actionFilter()
-
 	def eventFilter(self, obj, e):
 		if not sip.isdeleted(self.resizer.mdiArea):
 			if e.type() == QEvent.Resize:
 				if Application.readSetting("", "mdi_viewmode", "1") == "0":
 					self.resizer.moveSubwindows()
 					self.moveFloatersOnAreaChange(self.resizer) #move floaters
+					self.resizeFloatersOnAreaChange()
 					self.sizeBefore = [self.resizer.mdiArea.width(), self.resizer.mdiArea.height()] #changes done, can actualize width and height of workspace
 
 			#there are many more events, as subwindows aren't the only children, so the change have to be found as change in list size
@@ -64,6 +63,10 @@ class mdiAreaFilter(QMdiArea):
 
 		if resizer.views == 1:
 			resizer.activeSubwin.showMaximized() #one view is always maximized
+			Application.action("pickSubwindow").setVisible(False)
+
+		if resizer.views == 0:
+			Application.action("openOverview").setVisible(False)
 
 		resizer.moveSubwindows() #update changes
 
@@ -85,6 +88,10 @@ class mdiAreaFilter(QMdiArea):
 
 		if resizer.views == 1:
 			resizer.getActiveSubwin()
+			Application.action("openOverview").setVisible(True)
+
+		if resizer.views == 2:
+			Application.action("pickSubwindow").setVisible(True)
 
 		if current != None: #happens with psd, ora dropped?
 			if resizer.views >= 2 and current.isMaximized():
@@ -119,3 +126,12 @@ class mdiAreaFilter(QMdiArea):
 
 				resizer.snapToBorder(subwindow)
 
+	#when krita window gets very small, floaters shouldn't be bigger than it
+	def resizeFloatersOnAreaChange(self):
+		for subwindow in self.resizer.mdiArea.subWindowList():
+			if subwindow != self.resizer.activeSubwin and subwindow != self.resizer.otherSubwin:
+
+				w = min(subwindow.width(), self.resizer.mdiArea.width())
+				h = min(subwindow.height(), self.resizer.mdiArea.height()) 
+
+				subwindow.resize(w, h)

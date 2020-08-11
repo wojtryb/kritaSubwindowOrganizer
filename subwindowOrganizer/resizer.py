@@ -43,6 +43,7 @@ class resizer:
 
 		menu.actions()[5].setVisible(False)
 
+	#snapping floaters to border of the canvas
 	def snapToBorder(self, subwindow):
 		x = subwindow.pos().x()
 		y = subwindow.pos().y()
@@ -102,34 +103,41 @@ class resizer:
 				self.activeSubwin.move(0,0)
 				self.activeSubwin.resize(self.mdiArea.size())
 
+	#counting the size for newly created view
 	def resizeFloater(self, floater, pyFloater = None):
-		if DEFAULTFLOATERSIZE != None:
-			if pyFloater == None:
+		if DEFAULTFLOATERSIZE != None: #none, means that no resizing will be done
+			if pyFloater == None: #getting python object of the same qt subwindow, if not working, needs to be taken other way and passed as argument
 				self.mdiArea.setActiveSubWindow(floater)
 				pyFloater = Application.activeWindow().activeView().document()
 				
-			if type(DEFAULTFLOATERSIZE) == int:
+			if type(DEFAULTFLOATERSIZE) == int: #area is given in pixels
 				ratio = pyFloater.width()/pyFloater.height()
 				width = int((DEFAULTFLOATERSIZE*ratio)**0.5)
 				height = int(width/ratio)
 
-			elif DEFAULTFLOATERSIZE[0] == 0:
+			if type(DEFAULTFLOATERSIZE) == float: #area given as part of the whole workspace area
+				allPixels = self.mdiArea.width() * self.mdiArea.height() 
+				spaceToGet = allPixels * DEFAULTFLOATERSIZE
+
+				ratio = pyFloater.width()/pyFloater.height()
+				width = int((spaceToGet*ratio)**0.5)
+				height = int(width/ratio)
+
+			elif DEFAULTFLOATERSIZE[0] == 0: #height given, width to be calculated
 				height = DEFAULTFLOATERSIZE[1]
 				width = pyFloater.width()/pyFloater.height() * height
 
-			elif DEFAULTFLOATERSIZE[1] == 0:
+			elif DEFAULTFLOATERSIZE[1] == 0: #width given, height to be calculated
 				width = DEFAULTFLOATERSIZE[0]
 				height = pyFloater.height()/pyFloater.width() * width
 
-			else:
+			else: #fixed size given
 				width = DEFAULTFLOATERSIZE[0]
 				height = DEFAULTFLOATERSIZE[1]
 
 			floater.resize(width, height + 25)
 
-	# def moveWindowToCursor(self, window, cursor):
-
-
+	#calculating position and size of both backgrouders
 	def getBackgroundSizes(self):
 		if self.refPosition == "left":
 			self.otherPos = QPoint(0,0)
@@ -143,7 +151,7 @@ class resizer:
 			self.activePos = QPoint(0,0)
 			self.activeSize = QSize(int(self.mdiArea.width()-self.columnWidth), self.mdiArea.height())
 
-	#switch between 'split mode' and 'one window' mode
+	#switch into one window mode
 	def userModeOneWindow(self):
 		if self.otherSubwin != None: self.otherSubwin.showNormal() #bugfix: helps if user toggled overridden minimize button on main windows
 		self.refNeeded = False
@@ -157,6 +165,7 @@ class resizer:
 			self.toggleAlwaysOnTop(self.otherSubwin, True) #turn on
 			self.otherSubwin = None
 
+	#switch into split mode
 	def userModeSplit(self):
 		self.refNeeded = True
 		if self.views >= 2:
@@ -171,25 +180,33 @@ class resizer:
 			self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
 			self.toggleAlwaysOnTop(self.otherSubwin, False)
 
+	#turn off the whole plugin
 	def userTurnOff(self):
-		for subwindow in self.mdiArea.subWindowList():
+		for subwindow in self.mdiArea.subWindowList(): #remove all filters from all windows
 			subwindow.removeEventFilter(self.subWindowFilterAll)
 			subwindow.removeEventFilter(self.subWindowFilterFloater)
 			subwindow.removeEventFilter(self.subWindowFilterBackground)
 
-			menu = subwindow.children()[0]
+			menu = subwindow.children()[0] #enable "always on top action"
 			menu.actions()[5].setVisible(True)
 
+		#enable default organizing actions
 		if (action := Application.action('windows_cascade')) != None: action.setVisible(True)
 		if (action := Application.action('windows_tile')) != None: action.setVisible(True)
+
+		#disable plugin actions
+		Application.action("openOverview").setVisible(False)
+		Application.action("pickSubwindow").setVisible(False)
 
 		self.activeSubwin = None
 		self.otherSubwin = None
 
 		self.userModeOneWindow()
 
+		#filter on the workspace have to be removed that way
 		if not sip.isdeleted(self.mdiAreaFilter): del self.mdiAreaFilter
 			
+	#turn on the whole plugin
 	def userTurnOn(self):
 		self.mdiAreaFilter = mdiAreaFilter(self)
 
@@ -200,16 +217,16 @@ class resizer:
 
 		if self.views >= 1:
 			self.getActiveSubwin()
-			# if self.activeSubwin != None and self.activeSubwin.isMinimized():
-			# 	self.activeSubwin.showMaximized()
-			# 	self.activeSubwin.showNormal()
+			Application.action("openOverview").setVisible(True)
+		if self.views >= 2:
+			Application.action("pickSubwindow").setVisible(True)
 
 		for subwindow in self.mdiArea.subWindowList():
 			subwindow.installEventFilter(self.subWindowFilterAll)
 			menu = subwindow.children()[0]
 			menu.actions()[5].setVisible(False)
-			# if subwindow.isMinimized() or subwindow.isMaximized(): subwindow.showNormal()
-			if subwindow.isMinimized():
+
+			if subwindow.isMinimized(): #this makes sure all the windows are shown normal
 				subwindow.showMaximized()
 			if subwindow.isMaximized():
 				subwindow.showNormal()
@@ -231,11 +248,14 @@ class resizer:
 
 		self.mdiArea.setActiveSubWindow(self.activeSubwin)
 
+	#opens grayscale overwiev
 	def userOpenOverview(self):
 		self.mdiArea.setActiveSubWindow(self.activeSubwin)
 		doc = Application.activeDocument()
 		Application.activeWindow().addView(doc)
-		Application.action("softProof").trigger()
+		if SOFTPROOFING: Application.action("softProof").trigger()
+		overview = self.mdiArea.subWindowList()[-1]
+		overview.move(self.mdiArea.width() - overview.width(), self.mdiArea.height() - overview.height())
 
 	def switchBackgroundAndFloater(self, background, floater):
 		if floater.isMinimized(): floater.showNormal()
@@ -267,6 +287,7 @@ class resizer:
 		temp.move(floaterPos)
 		self.toggleAlwaysOnTop(temp, True)
 
+	#swapping subwindows with the keyboard/menu action instead of drag and drop
 	def userToggleSubwindow(self):
 
 		self.activeSubwin.showNormal() #those help if user toggled overridden minimize button on main windows

@@ -42,19 +42,5 @@
         <statusTip></statusTip>
         </Action>
 
-    <Action name="splitScreen">
-        <icon></icon>
-        <text>splitScreen</text>
-        <whatsThis></whatsThis>
-        <toolTip></toolTip>
-        <iconText></iconText>
-        <activationFlags>10000</activationFlags>
-        <activationConditions>0</activationConditions>
-        <shortcut></shortcut>
-        <isCheckable>true</isCheckable>
-        <statusTip></statusTip>
-        </Action>
-
-
     </Actions>
 </ActionCollection>

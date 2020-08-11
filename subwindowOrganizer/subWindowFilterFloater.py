@@ -28,8 +28,9 @@ class subWindowFilterFloater(QMdiSubWindow):
 
 		elif e.type() == QEvent.Move:
 			if Application.readSetting("", "mdi_viewmode", "1") == "0": #prevent freeze on user changing krita windows mode
+				# drag and drop action - going into split mode
 				if self.cursor != None and not self.resizer.refNeeded and not self.resizeBool\
-				and (self.cursor.x() < 5 or self.cursor.x() > self.resizer.mdiArea.width() - 5): # going into split mode
+				and (self.cursor.x() < 5 or self.cursor.x() > self.resizer.mdiArea.width() - 5): 
 
 					if self.cursor.x() < 5: #left edge
 						self.resizer.refPosition = "left"
@@ -44,6 +45,7 @@ class subWindowFilterFloater(QMdiSubWindow):
 						self.cursor = None
 						return True
 
+				#drag and dtop action for minimizing the window
 				if self.cursor != None and not self.resizeBool and self.cursor.y() > self.resizer.mdiArea.height() - 5:
 					obj.showMinimized()
 					return True

@@ -69,6 +69,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 		self.cursor = None
 		self.switchingInProgress = False
 
+	#drag and drop action for swapping a background window with floater
 	def swapFloaters(self, obj):
 		for subwindow in self.resizer.mdiArea.subWindowList(): #swapping with floaters
 			if self.isUnderMouse(subwindow, self.cursor) and subwindow != obj:
@@ -98,6 +99,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 					return True
 		return False
 
+	#drag and drop action for swapping two background windows
 	def swapBackgrounders(self, obj):
 		for subwindow in self.resizer.mdiArea.subWindowList(): #swapping backgrounders
 			if self.isUnderMouse(subwindow, self.cursor) and subwindow != obj:
@@ -107,6 +109,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 					return True
 		return False
 
+	#drag and drop action for leaving split screen mode
 	def enterOneWindowMode(self, obj):
 		if self.resizer.refNeeded and obj in [self.resizer.activeSubwin, self.resizer.otherSubwin] \
 		and 200 < self.cursor.y() < self.resizer.mdiArea.height() - 10 \
