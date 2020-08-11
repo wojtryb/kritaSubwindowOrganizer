@@ -17,24 +17,26 @@ class subWindowFilterBackground(QMdiSubWindow):
 			# if self.resizeBool:
 			# 	pass
 
-		elif e.type() == QEvent.WindowStateChange:
+		elif e.type() == QEvent.WindowStateChange: #title bar buttons override
 			oldMinimized = False
 			if int(e.oldState()) & int(Qt.WindowMinimized) != 0:
 				oldMinimized = True
-			if obj.isMinimized(): 
+
+			if obj.isMinimized(): #minimize button toggled - discard all changes
 				if obj.isMaximized(): obj.showMaximized()
 				else: obj.showNormal()
 				return True
-			if not obj.isMinimized() and oldMinimized:
+
+			if not obj.isMinimized() and oldMinimized: #?
 				return True
 
-			if self.resizer.views == 1:
+			if self.resizer.views == 1: #to make sure
 				obj.showMaximized()
 
 		elif e.type() == QEvent.MouseButtonPress:
 			cursorLocal = e.pos() #cursor in relation to window 
 			if -25 < cursorLocal.x() < 25 or obj.width()-25 < cursorLocal.x() < obj.width()+25 \
-			or -3 < cursorLocal.y() < 3 or obj.height()-25 < cursorLocal.y() < obj.height()+25: #it is a resizeBool, not move
+			or -3 < cursorLocal.y() < 3 or obj.height()-25 < cursorLocal.y() < obj.height()+25: #it is a resize, not move
 				self.resizeBool = True
 			else:
 				self.resizeBool = False
@@ -109,8 +111,16 @@ class subWindowFilterBackground(QMdiSubWindow):
 		return False
 
 	def enterOneWindowMode(self, obj):
-		if self.resizer.refNeeded and obj == self.resizer.otherSubwin and 200 < self.cursor.y() < self.resizer.mdiArea.height() - 10 \
+		if self.resizer.refNeeded and obj in [self.resizer.activeSubwin, self.resizer.otherSubwin] \
+		and 200 < self.cursor.y() < self.resizer.mdiArea.height() - 10 \
 		and 5 < self.cursor.x() < self.resizer.mdiArea.width() - 5: #in mdiArea
-			Application.action("splitScreen").trigger()
+
+			if obj == self.resizer.activeSubwin:
+				temp = self.resizer.activeSubwin
+				self.resizer.activeSubwin = self.resizer.otherSubwin
+				self.resizer.otherSubwin = temp
+
+			# Application.action("splitScreen").trigger()
+			self.resizer.userModeOneWindow()
 			return True
 		return False

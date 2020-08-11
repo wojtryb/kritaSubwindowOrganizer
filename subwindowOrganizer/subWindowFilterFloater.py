@@ -38,7 +38,8 @@ class subWindowFilterFloater(QMdiSubWindow):
 					h = self.resizer.mdiArea.height()
 					if SPLITMODERANGE[0] * h < self.cursor.y() < SPLITMODERANGE[1] * h:
 						self.switchingInProgress = True
-						Application.action("splitScreen").trigger()
+						# Application.action("splitScreen").trigger()
+						self.resizer.userModeSplit()
 						self.switchingInProgress = False
 						self.cursor = None
 						return True

@@ -3,17 +3,6 @@ import sip
  
 from .config import *
 
-
-
-# class actionFilter(QAction):
-# 	def __init__(self, parent=None):
-# 		super().__init__(parent)
-# 	def eventFilter(self, obj, e):
-# 		#override krita minimize and maximize actions
-# 		# if e.type() == QEvent.WindowStateChange:
-# 		print(e.type())
-# 		return False
-
 #event catcher for the workspace - changes in size, and subwindows added and removed
 class mdiAreaFilter(QMdiArea):
 	def __init__(self, resizer, parent=None):
@@ -24,23 +13,23 @@ class mdiAreaFilter(QMdiArea):
 		# self.actionFilter = actionFilter()
 
 	def eventFilter(self, obj, e):
-		if Application.readSetting("", "mdi_viewmode", "1") == "0":
-			if not sip.isdeleted(self.resizer.mdiArea):
-				if e.type() == QEvent.Resize:
+		if not sip.isdeleted(self.resizer.mdiArea):
+			if e.type() == QEvent.Resize:
+				if Application.readSetting("", "mdi_viewmode", "1") == "0":
 					self.resizer.moveSubwindows()
 					self.moveFloatersOnAreaChange(self.resizer) #move floaters
 					self.sizeBefore = [self.resizer.mdiArea.width(), self.resizer.mdiArea.height()] #changes done, can actualize width and height of workspace
 
-				#there are many more events, as subwindows aren't the only children, so the change have to be found as change in list size
-				if e.type() == QEvent.ChildAdded:
-					if self.resizer.views < len(self.resizer.mdiArea.subWindowList()):
-						self.viewOpenedEvent(self.resizer)
-						self.resizer.views = len(self.resizer.mdiArea.subWindowList())
+			#there are many more events, as subwindows aren't the only children, so the change have to be found as change in list size
+			if e.type() == QEvent.ChildAdded:
+				if self.resizer.views < len(self.resizer.mdiArea.subWindowList()):
+					self.viewOpenedEvent(self.resizer)
+					self.resizer.views = len(self.resizer.mdiArea.subWindowList())
 
-				if e.type() == QEvent.ChildRemoved:
-					if self.resizer.views > len(self.resizer.mdiArea.subWindowList()):
-						self.viewClosedEvent(self.resizer)
-						self.resizer.views = len(self.resizer.mdiArea.subWindowList())
+			if e.type() == QEvent.ChildRemoved:
+				if self.resizer.views > len(self.resizer.mdiArea.subWindowList()):
+					self.viewClosedEvent(self.resizer)
+					self.resizer.views = len(self.resizer.mdiArea.subWindowList())
 
 		return False
 
@@ -57,37 +46,29 @@ class mdiAreaFilter(QMdiArea):
 		resizer.views = len(resizer.mdiArea.subWindowList())
 
 		resizer.activeSubwin = checkIfDeleted(resizer.activeSubwin)
-		resizer.otherSubwin = checkIfDeleted(resizer.otherSubwin)
+		resizer.otherSubwin = checkIfDeleted(resizer.otherSubwin) 
 
-		#active was closed - make the reference take its place
-		if resizer.activeSubwin == None and resizer.views >= 1: 
-			if resizer.otherSubwin == None: #no ref window (non-split mode)
-				resizer.getOtherSubwin()
-				resizer.toggleAlwaysOnTop(resizer.otherSubwin, False)
-			resizer.otherSubwin.resize(resizer.mdiArea.width() - resizer.columnWidth, resizer.mdiArea.height())
-			resizer.otherSubwin.showNormal()
+		if resizer.activeSubwin == None: #active was closed, other is the new active (only in split mode, in one window, there is no other)
 			resizer.activeSubwin = resizer.otherSubwin
 			resizer.otherSubwin = None
 
-		if resizer.views == 1:
-			resizer.getActiveSubwin()
-			if resizer.activeSubwin != None: #bugfix - when multiple windows are closed at once, it can get here with both views deleted
-				view = resizer.activeSubwin.children()[3]
-				view.showMaximized()
+		if resizer.otherSubwin == None: #other was closed, or was transformed into active
+			if resizer.refNeeded: # split mode
+				resizer.userModeOneWindow()
 
-		if resizer.views > 1 and resizer.refNeeded:
-			if resizer.otherSubwin == None:
-				resizer.getOtherSubwin()
-				resizer.otherSubwin.removeEventFilter(resizer.subWindowFilterFloater)
-				resizer.toggleAlwaysOnTop(resizer.otherSubwin, False)
+		if resizer.activeSubwin == None: # at first it was one window mode, active was closed, and nothing took its place
+			resizer.getActiveSubwin()
+			if resizer.activeSubwin != None: # closing everything at once, can cause it to be none
+				resizer.activeSubwin.showMaximized() #workaround - minimized windows have problems with getting normal, so I maximize them first
+				resizer.activeSubwin.showNormal()
+
+		if resizer.views == 1:
+			resizer.activeSubwin.showMaximized() #one view is always maximized
 		
-		resizer.moveSubwindows()
+		resizer.moveSubwindows() #update changes
 
 	#each time when subwindow is opened
 	def viewOpenedEvent(self, resizer):
-
-		# self.act = Application.action("options_configure")
-		# self.act.installEventFilter(self.actionFilter)
 
 		Application.action('windows_cascade').setVisible(False)
 		Application.action('windows_tile').setVisible(False)
@@ -102,7 +83,7 @@ class mdiAreaFilter(QMdiArea):
 		newSubwindow = resizer.mdiArea.subWindowList()[-1]
 		newSubwindow.installEventFilter(resizer.subWindowFilterAll)
 
-		menu = newSubwindow.children()[0]
+		menu = newSubwindow.children()[0] #when the addon is enabled, user cant toggle "always on top" action
 		menu.actions()[5].setVisible(False)
 
 		if resizer.views == 1:
@@ -112,7 +93,11 @@ class mdiAreaFilter(QMdiArea):
 			if resizer.views >= 2 and current.isMaximized():
 				current.showNormal()
 
-		if resizer.views == 2 and resizer.refNeeded: # open in split screen
+		# if resizer.views == 2: Application.action("splitScreen").setVisible(True)
+
+		if resizer.views == 2 and SPLITBYDEFAULT: # open new in split screen
+			# if not Application.action("splitScreen").isChecked(): Application.action("splitScreen").trigger()
+			self.resizer.userModeSplit()
 			resizer.getOtherSubwin()
 			resizer.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*resizer.mdiArea.width()), resizer.mdiArea.height()) #default width for ref subwindow
 

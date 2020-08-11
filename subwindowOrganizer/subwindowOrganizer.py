@@ -7,7 +7,7 @@ from .resizer import resizer
 class SubwindowOrganizer(Extension):
 	# organizerToggleChecked = False
 	isToggled = False
-	splitScreenChecked = False #for toggle on setup
+	# splitScreenChecked = False #for toggle on setup
 	kritaWindowsMode = False #true if subwindows are on
 	#===============================#
 	def __init__(self, parent):
@@ -19,16 +19,6 @@ class SubwindowOrganizer(Extension):
 		if not self.extension.subWindowFilterAll.isMaximized:
 			self.extension.userToggleSubwindow()
 
-	#toggle mode - user action
-	def splitScreen(self, toggled):
-		Application.writeSetting("SubwindowOrganizer", "splitScreen", str(toggled).lower())
-		self.splitScreen = toggled
-
-		if self.extension.refNeeded:
-			self.extension.userModeOneWindow()
-		else:
-			self.extension.userModeSplit()
-
 	def openOverview(self):
 		self.extension.userOpenOverview()
 	
@@ -36,12 +26,10 @@ class SubwindowOrganizer(Extension):
 		Application.writeSetting("SubwindowOrganizer", "organizerToggled", str(toggled).lower())
 		self.isToggled = toggled
 		if self.kritaWindowsMode and self.isToggled:
-			self.splitScreenToggleAction.setVisible(True)
 			self.pickSubwindowAction.setVisible(True)
 			self.openOverviewAction.setVisible(True)
 			self.extension.userTurnOn()
 		else:
-			self.splitScreenToggleAction.setVisible(False)
 			self.pickSubwindowAction.setVisible(False)
 			self.openOverviewAction.setVisible(False)
 			self.extension.userTurnOff()
@@ -49,8 +37,6 @@ class SubwindowOrganizer(Extension):
 	def setup(self):
 		if Application.readSetting("SubwindowOrganizer", "organizerToggled", "true") == "true":
 			self.isToggled = True
-		if Application.readSetting("SubwindowOrganizer", "splitScreen", "true") == "true":
-			self.splitScreenChecked = True
 		if Application.readSetting("", "mdi_viewmode", "1") == "0":
 			self.kritaWindowsMode = True
 
@@ -67,7 +53,6 @@ class SubwindowOrganizer(Extension):
 			if self.kritaWindowsMode: #changed from tabs to subwindows
 				self.organizerToggleAction.setVisible(True) #addon now can be activated and deactivated
 				if self.isToggled: #addon is on, so we can activate it
-					self.splitScreenToggleAction.setVisible(True)
 					self.pickSubwindowAction.setVisible(True)
 					self.openOverviewAction.setVisible(True)
 					self.extension.userTurnOn()
@@ -77,7 +62,6 @@ class SubwindowOrganizer(Extension):
 					self.extension.userTurnOff()
 					self.pickSubwindowAction.setVisible(False)
 					self.openOverviewAction.setVisible(False)
-					self.splitScreenToggleAction.setVisible(False)
 					self.organizerToggleAction.setVisible(False)
 
 	def createActions(self, window):
@@ -90,12 +74,6 @@ class SubwindowOrganizer(Extension):
 		self.organizerToggleAction.setChecked(self.isToggled)
 		self.organizerToggleAction.toggled.connect(self.organizerToggle)
 		self.organizerToggleAction.setVisible(self.kritaWindowsMode)
-
-		self.splitScreenToggleAction = window.createAction("splitScreen", "Split screen", "view")
-		self.splitScreenToggleAction.toggled.connect(self.splitScreen) #in this case we want it to be executed at the beginning
-		self.splitScreenToggleAction.setCheckable(True)
-		self.splitScreenToggleAction.setChecked(self.splitScreenChecked)
-		self.splitScreenToggleAction.setVisible(toggleAtStart)
 
 		self.pickSubwindowAction = window.createAction("pickSubwindow", "Pick subwindow", "view")
 		self.pickSubwindowAction.triggered.connect(self.pickSubwindow)

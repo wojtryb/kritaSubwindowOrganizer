@@ -12,3 +12,4 @@ SNAPDISTANCE = 30
 SPLITMODERANGE = [0.3, 0.6]
 
 REFPOSITION = "left" #position on start of the program (left or right) 
+SPLITBYDEFAULT = True

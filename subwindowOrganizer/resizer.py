@@ -65,7 +65,6 @@ class resizer:
 		if self.activeSubwin != None: #bugfix - when multiple windows are closed at once, it can get here with both views deleted
 			self.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 			self.activeSubwin.installEventFilter(self.subWindowFilterBackground)
-			#WARNING: Line below not fully tested
 			self.toggleAlwaysOnTop(self.activeSubwin, False)
 
 	def getOtherSubwin(self):
@@ -76,7 +75,6 @@ class resizer:
 		self.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
 		self.columnWidth = self.otherSubwin.width()
 		self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
-		#WARNING: Line below not fully tested
 		self.toggleAlwaysOnTop(self.otherSubwin, False)
 
 	#window react to change in workspace size or adjust to changed size of the other 
@@ -108,7 +106,6 @@ class resizer:
 	def resizeFloater(self, floater, pyFloater = None):
 		if DEFAULTFLOATERSIZE != None:
 			if pyFloater == None:
-				# floater.activateWindow()
 				self.mdiArea.setActiveSubWindow(floater)
 				pyFloater = Application.activeWindow().activeView().document()
 				
@@ -162,11 +159,11 @@ class resizer:
 		self.refNeeded = True
 		if self.views >= 2:
 			current = self.mdiArea.activeSubWindow()
-			if current != self.activeSubwin:
-				if current.isMinimized(): current.showNormal()
+			if current != self.activeSubwin: #get a active floater to make it reference window
+				if current.isMinimized(): current.showNormal() #dont work!!!
 				self.otherSubwin = current
 				self.otherSubwin.installEventFilter(self.subWindowFilterBackground)
-			else:
+			else: #select random floater to make it reference window
 				self.getOtherSubwin()
 			self.columnWidth = self.otherSubwin.width()
 			self.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*self.mdiArea.width()), self.mdiArea.height()) #default width for ref subwindow
@@ -187,6 +184,8 @@ class resizer:
 		self.activeSubwin = None
 		self.otherSubwin = None
 
+		self.userModeOneWindow()
+
 		if not sip.isdeleted(self.mdiAreaFilter): del self.mdiAreaFilter
 			
 	def userTurnOn(self):
@@ -199,15 +198,16 @@ class resizer:
 
 		if self.views >= 1:
 			self.getActiveSubwin()
-		if self.views >= 2 and self.refNeeded:
-			self.getOtherSubwin()
+		# if self.views >= 2 and self.refNeeded:
+		# 	self.getOtherSubwin()
 		for subwindow in self.mdiArea.subWindowList():
 			subwindow.installEventFilter(self.subWindowFilterAll)
 			menu = subwindow.children()[0]
 			menu.actions()[5].setVisible(False)
 			if subwindow.isMinimized() or subwindow.isMaximized(): subwindow.showNormal()
 
-			if subwindow not in [self.activeSubwin, self.otherSubwin]:
+			# if subwindow not in [self.activeSubwin, self.otherSubwin]:
+			if subwindow != self.activeSubwin:
 				subwindow.installEventFilter(self.subWindowFilterFloater)
 				self.toggleAlwaysOnTop(subwindow, True)
 				self.resizeFloater(subwindow)
