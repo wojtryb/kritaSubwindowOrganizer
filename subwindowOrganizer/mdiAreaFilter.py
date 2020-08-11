@@ -48,9 +48,6 @@ class mdiAreaFilter(QMdiArea):
 		resizer.activeSubwin = checkIfDeleted(resizer.activeSubwin)
 		resizer.otherSubwin = checkIfDeleted(resizer.otherSubwin) 
 
-		# for subwindow in resizer.mdiArea.subWindowList():
-		# 	if subwindow.isMaximized(): subwindow.showNormal()
-
 		if resizer.activeSubwin == None: #active was closed, other is the new active (only in split mode, in one window, there is no other)
 			resizer.activeSubwin = resizer.otherSubwin
 			resizer.otherSubwin = None
@@ -79,8 +76,6 @@ class mdiAreaFilter(QMdiArea):
 		resizer.views = len(resizer.mdiArea.subWindowList())
 		current = resizer.mdiArea.activeSubWindow()
 
-		
-
 		#event catcher for every window, never removed 
 		newSubwindow = resizer.mdiArea.subWindowList()[-1]
 		newSubwindow.installEventFilter(resizer.subWindowFilterAll)
@@ -95,10 +90,7 @@ class mdiAreaFilter(QMdiArea):
 			if resizer.views >= 2 and current.isMaximized():
 				current.showNormal()
 
-		# if resizer.views == 2: Application.action("splitScreen").setVisible(True)
-
 		if resizer.views == 2 and SPLITBYDEFAULT: # open new in split screen
-			# if not Application.action("splitScreen").isChecked(): Application.action("splitScreen").trigger()
 			self.resizer.userModeSplit()
 			resizer.getOtherSubwin()
 			resizer.otherSubwin.resize(int(DEFAULTCOLUMNRATIO*resizer.mdiArea.width()), resizer.mdiArea.height()) #default width for ref subwindow

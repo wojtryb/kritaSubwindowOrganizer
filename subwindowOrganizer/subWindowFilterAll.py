@@ -26,13 +26,11 @@ class subWindowFilterAll(QMdiSubWindow):
 
 			# krita will crush if there will be a maximized window in usual close handling - it has to be made normal before it
 		if e.type() == QEvent.Close: #dont seem to work anyway...
-			# print("close")
 			obj.showNormal()
 			self.showAll(self.resizer)
 			self.isMaximized = False
 
 		return False
-
 
 	#-----------FUNCTIONS----------
 	#hiding windows, when one gets maximized
@@ -48,4 +46,3 @@ class subWindowFilterAll(QMdiSubWindow):
 			subwindow.show()
 		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH) #getting minimal width again
 		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
- 

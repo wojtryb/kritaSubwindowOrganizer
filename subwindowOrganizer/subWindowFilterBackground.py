@@ -1,5 +1,6 @@
 from krita import *
 from PyQt5.QtWidgets import QWidget
+from copy import copy
 
 from .config import *
 
@@ -40,6 +41,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 
 		elif e.type() == QEvent.MouseButtonRelease:
 			self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos()) #self.cursor in relation to mdiarea
+			self.lastCursorReleased = copy(self.cursor)
 
 		elif e.type() == QEvent.Move:
 			if (not self.resizeBool) and not self.switchingInProgress and self.cursor != None:
@@ -88,10 +90,8 @@ class subWindowFilterBackground(QMdiSubWindow):
 
 					#snapping to border, if got smaller and was on bottom or right
 					if x > self.resizer.mdiArea.width() - obj.width() - x: #closer to the right border of canvas than left one
-						print("1")
 						x += sX #self.resizer.mdiArea.width() - sX
 					if y > self.resizer.mdiArea.height() - obj.height() - y: #closer to the right border of canvas than left one
-						print("2")
 						y += sY #self.resizer.mdiArea.height() - sY
 					obj.move(x, y)
 
@@ -117,7 +117,7 @@ class subWindowFilterBackground(QMdiSubWindow):
 				self.resizer.activeSubwin = self.resizer.otherSubwin
 				self.resizer.otherSubwin = temp
 
-			# Application.action("splitScreen").trigger()
 			self.resizer.userModeOneWindow()
+			obj.move(self.lastCursorReleased.x() - 0.5*obj.width(), self.lastCursorReleased.y() - 10)
 			return True
 		return False

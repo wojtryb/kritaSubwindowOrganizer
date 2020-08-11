@@ -127,6 +127,9 @@ class resizer:
 
 			floater.resize(width, height + 25)
 
+	# def moveWindowToCursor(self, window, cursor):
+
+
 	def getBackgroundSizes(self):
 		if self.refPosition == "left":
 			self.otherPos = QPoint(0,0)
@@ -197,15 +200,20 @@ class resizer:
 
 		if self.views >= 1:
 			self.getActiveSubwin()
-		# if self.views >= 2 and self.refNeeded:
-		# 	self.getOtherSubwin()
+			# if self.activeSubwin != None and self.activeSubwin.isMinimized():
+			# 	self.activeSubwin.showMaximized()
+			# 	self.activeSubwin.showNormal()
+
 		for subwindow in self.mdiArea.subWindowList():
 			subwindow.installEventFilter(self.subWindowFilterAll)
 			menu = subwindow.children()[0]
 			menu.actions()[5].setVisible(False)
-			if subwindow.isMinimized() or subwindow.isMaximized(): subwindow.showNormal()
+			# if subwindow.isMinimized() or subwindow.isMaximized(): subwindow.showNormal()
+			if subwindow.isMinimized():
+				subwindow.showMaximized()
+			if subwindow.isMaximized():
+				subwindow.showNormal()
 
-			# if subwindow not in [self.activeSubwin, self.otherSubwin]:
 			if subwindow != self.activeSubwin:
 				subwindow.installEventFilter(self.subWindowFilterFloater)
 				self.toggleAlwaysOnTop(subwindow, True)

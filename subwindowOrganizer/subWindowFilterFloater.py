@@ -22,8 +22,9 @@ class subWindowFilterFloater(QMdiSubWindow):
 		elif e.type() == QEvent.MouseButtonRelease:
 			self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos())
 
-			if obj.isMinimized() and e.y() < -5:
+			if obj.isMinimized() and e.y() < -5: #deminimize on dragging minimized window
 				obj.showNormal()
+				obj.move(self.cursor.x() - 0.5*obj.width(), self.cursor.y() - 10) #move to cursor position
 
 		elif e.type() == QEvent.Move:
 			if Application.readSetting("", "mdi_viewmode", "1") == "0": #prevent freeze on user changing krita windows mode
@@ -38,7 +39,6 @@ class subWindowFilterFloater(QMdiSubWindow):
 					h = self.resizer.mdiArea.height()
 					if SPLITMODERANGE[0] * h < self.cursor.y() < SPLITMODERANGE[1] * h:
 						self.switchingInProgress = True
-						# Application.action("splitScreen").trigger()
 						self.resizer.userModeSplit()
 						self.switchingInProgress = False
 						self.cursor = None
@@ -51,4 +51,3 @@ class subWindowFilterFloater(QMdiSubWindow):
 				self.resizer.snapToBorder(obj) #snap to border when floater moves
 
 		return False
- 
