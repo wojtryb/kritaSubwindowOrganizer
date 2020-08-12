@@ -31,12 +31,14 @@ There will be no difference visible after script installation, when tabs are on.
 - **snap floaters to borders:** floaters can't go out of the workspace borders, which would cause it to create sliders.
 
 ## User actions:
-- **Toggle split screen:**
+- **Toggle organizer** *View > Toggle organizer*\
+Toggles the whole plugin on and off.
 
+- **Toggle split screen:** (drag and drop only)
 go into split-mode by dragging a floater to left or right border of the screen
-go into one-window mode by dragging reference window download
+go into one-window mode by dragging reference window down, releasing over the same window
 
-- **Organizing action:** *"View > Pick subwindow"* (ctrl+alt+m)\
+- **Organizing action:** *"View > Pick subwindow"*\
 Gives the ability to switch subwindows with each other. Uses active subwindow.
 - "split screen" mode:\
     -when the 'floater' is activated, make it a 'main reference'. (switching between multiple reference images)\
@@ -44,8 +46,10 @@ Gives the ability to switch subwindows with each other. Uses active subwindow.
 - "one window" mode:\
     -when the 'floater' is activated, open it in main canvas (which becomes a floater)\
     -when the 'canvas' is activated, the tool is idle.
+**Simpler way is to drag and drop backgrounder into floater or another backgrounder to swap them.**
  
-drag and drop backgrounder into floater or another backgrounder to swap them
+- **Open canvas overview** *View > Open canvas overview*
+opens the main subwindow in another view with softproofing turned on by default (soft proofing toggling can be disabled in config.py file in plugin directory)
  
 - **maximize** (override): when one window is maximized by the user, all the rest are not visible, even when the "always on top" is toggled.
 - **minimize** (override): only floating windows can get minimized. Minimization can be done with drag and drop.
