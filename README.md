@@ -1,7 +1,7 @@
 # Subwindow organizer for krita
 Krita plugin that helps keep order of subwindows.
 
-## What's new in 1.2.0:
+## What's new in 1.2:
 - tabs support and toggling the plugin - the plugin can be switched on and off, and switching between tabs and subwindows in krita settings, will not break it.
 - reworked split screen - now by default there is only one background window. Dragging the floater to the right or left side places it in a split screen. To go out the split screen, any background window has to be moved down.
 - move floater to bottom of the screen to minimize it, and move minimized window up to deminimize.
@@ -9,6 +9,10 @@ Krita plugin that helps keep order of subwindows.
 - added the "open overview" action that opens the main drawing window in another view with soft proofing enabled. Desired to be used as the grayscale overview, but it has to be manually picked in Settings > Configure krita... > Color Management > Soft Proofing > Model > grayscale
 - preventing the user from breaking actions: manually unsetting "always on top" mode, tile and cascade options when the plugin is on.
 - floaters will resize down, when krita window is made too small to prevent them from being bigger than workspace.
+
+What's new in 1.2.1:
+- fixed a bug when opening a second subwindow with drag and drop, did not demaximize the window.
+- now, opening a new subwindow, should always go out of maximize mode.
 
 ## Requirement:
 'subwindow' mode is enabled, instead of the default 'tabs'.\

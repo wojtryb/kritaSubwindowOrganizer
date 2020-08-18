@@ -93,10 +93,10 @@ class mdiAreaFilter(QMdiArea):
 		if resizer.views == 2:
 			Application.action("pickSubwindow").setVisible(True)
 
-		if current != None: #happens with psd, ora dropped?
-			if resizer.views >= 2 and current.isMaximized():
-				current.showNormal()
-
+		maximizedList = [sub.isMaximized() for sub in resizer.mdiArea.subWindowList()] 
+		if resizer.views >= 2 and any(maximizedList): #if something was maximized, demaximize it
+			resizer.mdiArea.subWindowList()[maximizedList.index(True)].showNormal()
+			
 		if resizer.views == 2 and SPLITBYDEFAULT: # open new in split screen
 			self.resizer.userModeSplit()
 			resizer.getOtherSubwin()
