@@ -30,9 +30,11 @@ class ActionBuilder:
             "organizerToggle", "Toggle organizer", "view"
         )
         organizer_toggle.setCheckable(True)
-        organizer_toggle.setChecked(self.organizer.isToggled)
+        organizer_toggle.setChecked(self.organizer.settingsHandler.is_toggled)
         organizer_toggle.toggled.connect(self.organizer.organizerToggle)
-        organizer_toggle.setVisible(self.organizer.kritaWindowsMode)
+        organizer_toggle.setVisible(
+            self.organizer.settingsHandler.is_subwindows
+        )
 
         return organizer_toggle
 

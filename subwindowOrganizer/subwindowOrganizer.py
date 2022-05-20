@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from krita import *
-from PyQt5.QtWidgets import QMessageBox
 
 from .Resizer import Resizer
 from .actions import Actions, ActionBuilder
+from .SettingsHandler import SettingsHandler
 
 
 class SubwindowOrganizer(Extension):
@@ -11,24 +11,16 @@ class SubwindowOrganizer(Extension):
     def __init__(self, parent):
         super(SubwindowOrganizer, self).__init__(parent)
 
-        self.inProgress: bool
-        self.isToggled: bool
-        self.kritaWindowsMode: bool
-
         self.settingsNotifier: None  # Notifier
 
         self.actions: Actions
         self.resizer: Resizer
+        self.settingsHandler = SettingsHandler()
 
     def setup(self):
         """reading values saved in krita settings and creating a
         notifier for settings changed event.
         """
-        if Application.readSetting("SubwindowOrganizer", "organizerToggled", "true") == "true":
-            self.isToggled = True
-        if Application.readSetting("", "mdi_viewmode", "1") == "0":
-            self.kritaWindowsMode = True
-
         self.settingsNotifier = Application.notifier()
         self.settingsNotifier.setActive(True)
         self.settingsNotifier.configurationChanged.connect(
@@ -38,7 +30,7 @@ class SubwindowOrganizer(Extension):
     def createActions(self, window):
         """creates actions displayed in the view menu"""
         qwin = window.qwindow()
-        toggleAtStart = self.isToggled and self.kritaWindowsMode
+        toggleAtStart = self.settingsHandler.is_toggled and self.settingsHandler.is_subwindows
 
         self.resizer = Resizer(qwin, toggleAtStart)
         self.actions = ActionBuilder(self, window).build_actions()
@@ -54,10 +46,8 @@ class SubwindowOrganizer(Extension):
 
     def organizerToggle(self, toggled):
         """toggles the whole plugin off and on"""
-        Application.writeSetting("SubwindowOrganizer",
-                                 "organizerToggled", str(toggled).lower())
-        self.isToggled = toggled
-        if self.kritaWindowsMode and self.isToggled:
+        self.settingsHandler.write_is_toggled(toggled)
+        if self.settingsHandler.is_subwindows and self.settingsHandler.is_toggled:
             self.actions.pick_subwindow.setVisible(True)
             self.actions.open_overview.setVisible(True)
             self.resizer.userTurnOn()
@@ -70,21 +60,18 @@ class SubwindowOrganizer(Extension):
         """happens when document mode (subwindow and tabs) is changed in
          settings by the user
          """
-        if Application.readSetting("", "mdi_viewmode", "1") == "0":
-            newMode = True
-        else:
-            newMode = False
+        new_mode = self.settingsHandler.is_subwindows
+        old_mode = self.settingsHandler.was_subwindows
 
-        if self.kritaWindowsMode ^ newMode:  # mode was changed in krita settings
-            self.kritaWindowsMode = newMode
-            if self.kritaWindowsMode:  # changed from tabs to subwindows
+        if old_mode ^ new_mode:  # mode was changed in krita settings
+            if new_mode:  # changed from tabs to subwindows
                 # addon now can be activated and deactivated
-                self.organizerToggleAction.setVisible(True)
-                if self.isToggled:  # addon is on, so we can activate it
+                self.actions.organizer_toggle.setVisible(True)
+                if self.settingsHandler.was_toggled:  # addon is on, so we can activate it
                     self.resizer.userTurnOn()
             else:  # mode changed from subwindows to tab
-                self.organizerToggleAction.setVisible(False)
-                if self.isToggled:  # addon was on
+                self.actions.organizer_toggle.setVisible(False)
+                if self.settingsHandler.was_toggled:  # addon was on
                     self.resizer.userTurnOff()
 
 
