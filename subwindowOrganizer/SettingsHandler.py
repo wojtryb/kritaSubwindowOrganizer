@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Callable
 from krita import *
 
 from typing import TYPE_CHECKING
@@ -53,13 +52,14 @@ class SettingsNotifier:
         new_mode = organizer.settingsHandler.is_subwindows
         old_mode = organizer.settingsHandler.was_subwindows
 
-        if old_mode ^ new_mode:  # mode was changed in krita settings
-            if new_mode:  # changed from tabs to subwindows
-                # addon now can be activated and deactivated
-                organizer.actions.organizer_toggle.setVisible(True)
-                if organizer.settingsHandler.was_toggled:  # addon is on, so we can activate it
-                    organizer.resizer.userTurnOn()
-            else:  # mode changed from subwindows to tab
-                organizer.actions.organizer_toggle.setVisible(False)
-                if organizer.settingsHandler.was_toggled:  # addon was on
-                    organizer.resizer.userTurnOff()
+        if not old_mode ^ new_mode:  # mode was not changed in krita settings
+            return
+        if new_mode:  # changed from tabs to subwindows
+            # addon now can be activated and deactivated
+            self.organizer.actions.organizer_toggle.setVisible(True)
+            if self.organizer.settingsHandler.was_toggled:  # addon is on, so we can activate it
+                self.organizer.resizer.userTurnOn()
+        else:  # mode changed from subwindows to tab
+            self.organizer.actions.organizer_toggle.setVisible(False)
+            if self.organizer.settingsHandler.was_toggled:  # addon was on
+                self.organizer.resizer.userTurnOff()
