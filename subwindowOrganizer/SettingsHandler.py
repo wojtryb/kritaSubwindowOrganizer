@@ -1,5 +1,10 @@
 from dataclasses import dataclass
+from typing import Callable
 from krita import *
+
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from subwindowOrganizer import SubwindowOrganizer
 
 
 @dataclass
@@ -28,3 +33,33 @@ class SettingsHandler:
             "SubwindowOrganizer", "organizerToggled", str(toggled).lower()
         )
         self.was_toggled = toggled
+
+
+@dataclass
+class SettingsNotifier:
+    def __init__(self, organizer: 'SubwindowOrganizer') -> None:
+        self.notifier = Application.notifier()
+        self.notifier.setActive(True)
+        self.notifier.configurationChanged.connect(
+            self.settingsChangedEvent
+        )
+        self.organizer = organizer
+
+    def settingsChangedEvent(self):
+        """happens when document mode (subwindow and tabs) is changed in
+         settings by the user
+         """
+        organizer = self.organizer
+        new_mode = organizer.settingsHandler.is_subwindows
+        old_mode = organizer.settingsHandler.was_subwindows
+
+        if old_mode ^ new_mode:  # mode was changed in krita settings
+            if new_mode:  # changed from tabs to subwindows
+                # addon now can be activated and deactivated
+                organizer.actions.organizer_toggle.setVisible(True)
+                if organizer.settingsHandler.was_toggled:  # addon is on, so we can activate it
+                    organizer.resizer.userTurnOn()
+            else:  # mode changed from subwindows to tab
+                organizer.actions.organizer_toggle.setVisible(False)
+                if organizer.settingsHandler.was_toggled:  # addon was on
+                    organizer.resizer.userTurnOff()
