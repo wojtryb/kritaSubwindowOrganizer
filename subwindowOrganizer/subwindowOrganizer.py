@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from krita import *
 
 from .Resizer import Resizer
@@ -15,6 +14,7 @@ class SubwindowOrganizer(Extension):
         self.settingsNotifier = SettingsNotifier(self)
 
         # created in createActions
+        self.actionBuilder: ActionBuilder
         self.actions: ActionsContainer
         self.resizer: Resizer
 
@@ -27,7 +27,8 @@ class SubwindowOrganizer(Extension):
         toggleAtStart = self.settingsHandler.is_toggled and self.settingsHandler.is_subwindows
 
         self.resizer = Resizer(qwin, toggleAtStart)
-        self.actions = ActionBuilder(self, window).build_actions()
+        self.actionBuilder = ActionBuilder(self, window)
+        self.actions = self.actionBuilder.build_actions()
 
 
 Krita.instance().addExtension(SubwindowOrganizer(Krita.instance()))
