@@ -1,7 +1,5 @@
 from krita import *
-from PyQt5.QtWidgets import QWidget, QToolButton, QMessageBox
 from copy import copy
-import sys
 import sip
 
 from .mdiAreaFilter import mdiAreaFilter
@@ -12,11 +10,8 @@ from .subWindowFilterAll import subWindowFilterAll
 from .config import *
 
 
-from PyQt5.QtGui import QGuiApplication
-
-
 class Resizer:
-    # user customization
+    """user customization"""
 
     def __init__(self, qwin, toggleAtStart):
         self.activeSubwin = None  # main canvas for drawing
@@ -35,10 +30,23 @@ class Resizer:
             # cant be created on a start if the plugin should be off
             self.mdiAreaFilter = mdiAreaFilter(self)
 
-        self.subWindowFilterBackground = subWindowFilterBackground(
-            self)  # installation on subwindows happens later
+        # installation on subwindows happens later
+        self.subWindowFilterBackground = subWindowFilterBackground(self)
         self.subWindowFilterFloater = subWindowFilterFloater(self)
         self.subWindowFilterAll = subWindowFilterAll(self)
+
+    @property
+    def floaters(self):
+        floaters = set(self.mdiArea.subWindowList())
+        floaters -= {self.activeSubwin, self.otherSubwin}
+        return floaters
+
+    @property
+    def backgrounders(self):
+        return {self.activeSubwin, self.otherSubwin} - {None}
+
+    def swap_backgrounders(self):
+        self.activeSubwin, self.otherSubwin = self.otherSubwin, self.activeSubwin
 
     def toggleAlwaysOnTop(self, subwindow, check):
         menu = subwindow.children()[0]
