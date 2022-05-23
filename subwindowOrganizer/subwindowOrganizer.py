@@ -6,6 +6,7 @@ from .SettingsHandler import SettingsHandler, SettingsNotifier
 
 
 class SubwindowOrganizer(Extension):
+    """Plugin that changes the way subwindows in krita are handled."""
 
     def __init__(self, parent):
         super(SubwindowOrganizer, self).__init__(parent)
@@ -22,7 +23,9 @@ class SubwindowOrganizer(Extension):
         pass
 
     def createActions(self, window):
-        """creates actions displayed in the view menu"""
+        """Initialize everything that need access to krita window
+        object.
+        """
         qwin = window.qwindow()
         toggleAtStart = self.settingsHandler.is_toggled and self.settingsHandler.is_subwindows
 

@@ -1,3 +1,10 @@
+"""Module for handling krita actions.
+
+It stores the code which should be done when action is used (with
+shortcut or menu entry), binding those methods to krita and a container
+for storing all the actions in one place.
+"""
+
 from krita import *
 
 from dataclasses import dataclass
@@ -8,6 +15,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class ActionsContainer:
+    """Stores all actions defined in a plugin."""
     organizer_toggle: QAction
     pick_subwindow: QAction
     open_overview: QAction
@@ -15,6 +23,7 @@ class ActionsContainer:
 
 @dataclass
 class OrganizerActions:
+    """Methods to be used every time a krita action is called."""
     organizer: 'SubwindowOrganizer'
 
     def pickSubwindow(self) -> None:
@@ -34,6 +43,7 @@ class OrganizerActions:
             self.organizer.actions.pick_subwindow.setVisible(True)
             self.organizer.actions.open_overview.setVisible(True)
             self.organizer.resizer.userTurnOn()
+            return
 
         self.organizer.actions.pick_subwindow.setVisible(False)
         self.organizer.actions.open_overview.setVisible(False)
@@ -41,6 +51,11 @@ class OrganizerActions:
 
 
 class ActionBuilder:
+    """Action factory.
+
+    Call 'build_actions' to initialize all the actions in krita, bind
+    proper methods to them, and return them in a dataclass container.
+    """
 
     def __init__(self, organizer: 'SubwindowOrganizer', window):
         self.organizer = organizer
@@ -48,6 +63,7 @@ class ActionBuilder:
         self.actions = OrganizerActions(organizer)
 
     def build_actions(self) -> ActionsContainer:
+        """Return a dataclass container with binded krita actions."""
         return ActionsContainer(
             self._build_organizer_toggle(),
             self._build_pick_subwindow(),
@@ -64,7 +80,6 @@ class ActionBuilder:
         organizer_toggle.setVisible(
             self.organizer.settingsHandler.is_subwindows
         )
-
         return organizer_toggle
 
     def _build_pick_subwindow(self) -> QAction:
