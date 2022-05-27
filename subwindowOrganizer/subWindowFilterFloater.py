@@ -1,55 +1,84 @@
 from krita import *
 from .config import *
+from .SettingsHandler import SettingsHandler
 
-#event catcher for floating windows
+
 class subWindowFilterFloater(QMdiSubWindow):
-	def __init__(self, resizer, parent=None):
-		super().__init__(parent)
-		self.resizer = resizer
-		self.resizeBool = False
-		self.cursor = None
-		self.switchingInProgress = False
-	def eventFilter(self, obj, e):
+    """Event catcher for floating windows."""
 
-		if e.type() == QEvent.MouseButtonPress:
-			cursorLocal = e.pos() #cursor in relation to window 
-			if -25 < cursorLocal.x() < 25 or obj.width()-25 < cursorLocal.x() < obj.width()+25 \
-			or -3 < cursorLocal.y() < 3 or obj.height()-25 < cursorLocal.y() < obj.height()+25: #it is a resizeBool, not move
-				self.resizeBool = True
-			else:
-				self.resizeBool = False
+    def __init__(self, resizer, parent=None):
+        super().__init__(parent)
+        self.resizer = resizer
+        self.resizeBool = False
+        self.cursor = None
+        self.switchingInProgress = False
 
-		elif e.type() == QEvent.MouseButtonRelease:
-			self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos())
+    def eventFilter(self, obj, e):
+        if e.type() == QEvent.MouseButtonPress:
+            self.handle_mouse_button_press(obj, e)
+        elif e.type() == QEvent.MouseButtonRelease:
+            self.handle_mouse_button_release(obj, e)
+        elif e.type() == QEvent.Move:
+            self.handle_floater_move(obj)
+        return False
 
-			if obj.isMinimized() and e.y() < -5: #deminimize on dragging minimized window
-				obj.showNormal()
-				obj.move(self.cursor.x() - 0.5*obj.width(), self.cursor.y() - 10) #move to cursor position
+    def handle_mouse_button_press(self, obj, e):
+        # reuse code from background filter!
+        cursorLocal = e.pos()  # cursor in relation to window
+        self.resizeBool = (
+            -25 < cursorLocal.x() < 25
+            or -3 < cursorLocal.y() < 3
+            or obj.width()-25 < cursorLocal.x() < obj.width()+25
+            or obj.height()-25 < cursorLocal.y() < obj.height()+25
+        )
 
-		elif e.type() == QEvent.Move:
-			if Application.readSetting("", "mdi_viewmode", "1") == "0": #prevent freeze on user changing krita windows mode
-				# drag and drop action - going into split mode
-				if self.cursor != None and not self.resizer.refNeeded and not self.resizeBool\
-				and (self.cursor.x() < 5 or self.cursor.x() > self.resizer.mdiArea.width() - 5): 
+    def handle_mouse_button_release(self, obj, e):
+        self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos())
+        # deminimize on dragging minimized window
+        if obj.isMinimized() and e.y() < -5:
+            obj.showNormal()
+            # move to cursor position
+            obj.move(
+                self.cursor.x() - 0.5*obj.width(),
+                self.cursor.y() - 10
+            )
 
-					if self.cursor.x() < 5: #left edge
-						self.resizer.refPosition = "left"
-					else:
-						self.resizer.refPosition = "right"
+    def handle_floater_move(self, obj):
+        """prevent freeze on user changing krita windows mode"""
+        if not SettingsHandler().is_subwindows:
+            return
 
-					h = self.resizer.mdiArea.height()
-					if SPLITMODERANGE[0] * h < self.cursor.y() < SPLITMODERANGE[1] * h:
-						self.switchingInProgress = True
-						self.resizer.userModeSplit()
-						self.switchingInProgress = False
-						self.cursor = None
-						return True
+        if is_split_screen_event(self):
+            if self.cursor.x() < 5:  # left edge
+                self.resizer.refPosition = "left"
+            else:
+                self.resizer.refPosition = "right"
 
-				#drag and dtop action for minimizing the window
-				if self.cursor != None and not self.resizeBool and self.cursor.y() > self.resizer.mdiArea.height() - 5:
-					obj.showMinimized()
-					return True
+            h = self.resizer.mdiArea.height()
+            if SPLITMODERANGE[0] * h < self.cursor.y() < SPLITMODERANGE[1] * h:
+                self.switchingInProgress = True
+                self.resizer.userModeSplit()
+                self.switchingInProgress = False
+                self.cursor = None
 
-				self.resizer.snapToBorder(obj) #snap to border when floater moves
+        elif is_minimizer_event(self):
+            obj.showMinimized()
 
-		return False
+        # snap to border when floater moves
+        else:
+            self.resizer.snapToBorder(obj)
+
+
+def is_split_screen_event(windowFilter):
+    return (
+        windowFilter.cursor
+        and not windowFilter.resizer.refNeeded
+        and not windowFilter.resizeBool
+        and not 5 < windowFilter.cursor.x() < windowFilter.resizer.mdiArea.width() - 5)
+
+
+def is_minimizer_event(windowFilter):
+    return (
+        windowFilter.cursor
+        and not windowFilter.resizeBool
+        and windowFilter.cursor.y() > windowFilter.resizer.mdiArea.height() - 5)

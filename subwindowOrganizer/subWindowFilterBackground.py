@@ -4,8 +4,11 @@ from copy import copy
 
 from .config import *
 
+# TODO: event handler class?
 
 # TODO: move to: subwindow helpers
+
+
 def isUnderMouse(subwin, cursor):
     if (
             subwin.pos().x() < cursor.x() < subwin.pos().x() + subwin.width() and
@@ -38,51 +41,52 @@ class subWindowFilterBackground(QMdiSubWindow):
             self.resizer.moveSubwindows()  # update the second window
 
         elif e.type() == QEvent.WindowStateChange:  # title bar buttons override
-            oldMinimized = False
-            if int(e.oldState()) & int(Qt.WindowMinimized) != 0:
-                oldMinimized = True
-
-            if obj.isMinimized():  # minimize button toggled - discard all changes
-                if obj.isMaximized():
-                    obj.showMaximized()
-                else:
-                    obj.showNormal()
+            ret = self.handle_window_state_change_event(obj, e)
+            if ret:
                 return True
-
-            if not obj.isMinimized() and oldMinimized:  # ?
-                return True
-
-            if self.resizer.views == 1:  # to make sure
-                obj.showMaximized()
 
         elif e.type() == QEvent.MouseButtonPress:
             cursorLocal = e.pos()  # cursor in relation to window
-            if -25 < cursorLocal.x() < 25 or obj.width()-25 < cursorLocal.x() < obj.width()+25 \
-                    or -3 < cursorLocal.y() < 3 or obj.height()-25 < cursorLocal.y() < obj.height()+25:  # it is a resize, not move
-                self.resizeBool = True
-            else:
-                self.resizeBool = False
+            self.resizeBool = is_resize_event(cursorLocal, obj)
 
         elif e.type() == QEvent.MouseButtonRelease:
-            self.cursor = self.resizer.mdiArea.mapFromGlobal(
-                e.globalPos())  # self.cursor in relation to mdiarea
+            self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos())
             self.lastCursorReleased = copy(self.cursor)
 
         elif e.type() == QEvent.Move:
-            if (not self.resizeBool) and not self.switchingInProgress and self.cursor != None:
-                self.switchingInProgress = True
-
-                done = self.swap_floaters_if_needed(obj)
-                if not done:
-                    done = self.swap_backgrounders_if_needed(obj)
-                if not done:
-                    done = self.enter_one_window_mode(obj)
-                # entering split mode is done by floaters movement
-
+            self.handle_move_event(obj)
             self.resetFlags()
             return True
 
         return False
+
+    def handle_window_state_change_event(self, obj, e):
+        oldMinimized = int(e.oldState()) & int(Qt.WindowMinimized) != 0
+
+        # TODO: refractor this, whatever it does
+        if obj.isMinimized():  # minimize button toggled - discard all changes
+            if obj.isMaximized():
+                obj.showMaximized()
+            else:
+                obj.showNormal()
+            return True
+
+        if not obj.isMinimized() and oldMinimized:  # ?
+            return True
+
+        if self.resizer.views == 1:  # to make sure
+            obj.showMaximized()
+
+    def handle_move_event(self, obj):
+        if is_move_event(self):
+            self.switchingInProgress = True
+
+            done = self.swap_floaters_if_needed(obj)
+            if not done:
+                done = self.swap_backgrounders_if_needed(obj)
+            if not done:
+                done = self.enter_one_window_mode(obj)
+            # entering split mode is done by floaters movement
 
     def swap_floaters_if_needed(self, obj):
         """Drag and drop action for swapping a background window with
@@ -136,17 +140,34 @@ class subWindowFilterBackground(QMdiSubWindow):
 
     def enter_one_window_mode(self, obj):
         """Drag and drop action for leaving split screen mode."""
-        if (self.resizer.refNeeded and obj in self.resizer.backgrounders
+        if not (
+                self.resizer.refNeeded
+                and obj in self.resizer.backgrounders
                 and 200 < self.cursor.y() < self.resizer.mdiArea.height() - 10
                 and 5 < self.cursor.x() < self.resizer.mdiArea.width() - 5):  # in mdiArea
+            return False
 
-            if obj == self.resizer.activeSubwin:
-                self.resizer.swap_backgrounders()
+        if obj == self.resizer.activeSubwin:
+            self.resizer.swap_backgrounders()
 
-            self.resizer.userModeOneWindow()
-            obj.move(
-                self.lastCursorReleased.x() - 0.5*obj.width(),
-                self.lastCursorReleased.y() - 10
-            )
-            return True
-        return False
+        self.resizer.userModeOneWindow()
+        obj.move(
+            self.lastCursorReleased.x() - 0.5*obj.width(),
+            self.lastCursorReleased.y() - 10
+        )
+        return True
+
+
+def is_resize_event(cursor, obj):
+    return (
+        -25 < cursor.x() < 25
+        or -3 < cursor.y() < 3
+        or obj.width()-25 < cursor.x() < obj.width()+25
+        or obj.height()-25 < cursor.y() < obj.height()+25)
+
+
+def is_move_event(windowFilter):
+    return (
+        not windowFilter.resizeBool
+        and not windowFilter.switchingInProgress
+        and windowFilter.cursor)

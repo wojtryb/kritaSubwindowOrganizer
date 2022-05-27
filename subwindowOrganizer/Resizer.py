@@ -36,10 +36,12 @@ class Resizer:
         self.subWindowFilterAll = subWindowFilterAll(self)
 
     @property
+    def all_subwindows(self):
+        return set(self.mdiArea.subWindowList())
+
+    @property
     def floaters(self):
-        floaters = set(self.mdiArea.subWindowList())
-        floaters -= {self.activeSubwin, self.otherSubwin}
-        return floaters
+        return self.all_subwindows - {self.activeSubwin, self.otherSubwin}
 
     @property
     def backgrounders(self):

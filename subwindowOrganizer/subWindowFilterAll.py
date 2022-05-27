@@ -1,48 +1,58 @@
 from krita import *
 
 from .config import *
+from .SettingsHandler import SettingsHandler
 
-#event catcher for every window - both floaters and back ones
+
 class subWindowFilterAll(QMdiSubWindow):
-	def __init__(self, resizer, parent=None):
-		super().__init__(parent)
-		self.resizer = resizer
+    """event catcher for every window - both floaters and back ones"""
 
-		self.isMaximized = False #is any window currently maximized
-	def eventFilter(self, obj, e):
-			#override krita minimize and maximize actions
-		if e.type() == QEvent.WindowStateChange:
-			if Application.readSetting("", "mdi_viewmode", "1") == "0": #prevent freeze on user changing krita windows mode
-				oldMaximized = False
-				if int(e.oldState()) & int(Qt.WindowMaximized) != 0:
-					oldMaximized = True
+    def __init__(self, resizer, parent=None):
+        super().__init__(parent)
+        self.resizer = resizer
+        self.isMaximized = False  # is any window currently maximized
 
-				if obj.isMaximized() and not oldMaximized: #there was a change to maximized state
-					self.hideAllExcept(self.resizer, exception=obj)
-					self.isMaximized = True
-				if not obj.isMaximized() and oldMaximized: #there was a change to normal from maximize
-					self.showAll(self.resizer)
-					self.isMaximized = False
+    def eventFilter(self, obj, e):
+        """Override krita minimize and maximize actions"""
 
-			# krita will crush if there will be a maximized window in usual close handling - it has to be made normal before it
-		if e.type() == QEvent.Close: #dont seem to work anyway...
-			obj.showNormal()
-			self.showAll(self.resizer)
-			self.isMaximized = False
+        if e.type() == QEvent.WindowStateChange:
+            # prevent freeze on user changing krita windows mode
 
-		return False
+            if not SettingsHandler().is_subwindows:
+                return False
 
-	#-----------FUNCTIONS----------
-	#hiding windows, when one gets maximized
-	def hideAllExcept(self, resizer, exception):
-		for subwindow in resizer.mdiArea.subWindowList():
-			if subwindow != exception: subwindow.hide()
-		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(0) #minimal width would not allow them to hide properly
-		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(0)
+            oldMaximized = False
+            if int(e.oldState()) & int(Qt.WindowMaximized) != 0:
+                oldMaximized = True
 
-	#showind all hidden window, when maximized turns normal
-	def showAll(self, resizer):
-		for subwindow in resizer.mdiArea.subWindowList():
-			subwindow.show()
-		if resizer.activeSubwin != None: resizer.activeSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH) #getting minimal width again
-		if resizer.otherSubwin != None: resizer.otherSubwin.setMinimumWidth(MINIMALCOLUMNWIDTH)
+            if obj.isMaximized() and not oldMaximized:  # there was a change to maximized state
+                self.hideAllExcept(self.resizer, exception=obj)
+                self.isMaximized = True
+            if not obj.isMaximized() and oldMaximized:  # there was a change to normal from maximize
+                self.showAll(self.resizer)
+                self.isMaximized = False
+
+        elif e.type() == QEvent.Close:  # dont seem to work anyway...
+            # krita will crush if there will be a maximized window in usual close handling - it has to be made normal before it
+            obj.showNormal()
+            self.showAll(self.resizer)
+            self.isMaximized = False
+
+        return False
+
+    def hideAllExcept(self, resizer, exception):
+        """hiding windows, when one gets maximized"""
+        for subwindow in resizer.all_subwindows:
+            if subwindow != exception:
+                subwindow.hide()
+
+        for backgrounder in resizer.backgrounders:
+            backgrounder.setMinimumWidth(0)
+
+    def showAll(self, resizer):
+        """showing all hidden window, when maximized turns normal"""
+        for subwindow in resizer.mdiArea.subWindowList():
+            subwindow.show()
+
+        for backgrounder in resizer.backgrounders:
+            backgrounder.setMinimumWidth(MINIMALCOLUMNWIDTH)
