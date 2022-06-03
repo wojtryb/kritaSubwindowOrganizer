@@ -1,6 +1,7 @@
 from krita import *
 from .config import *
 from .SettingsHandler import SettingsHandler
+from .mouseEventHandler import MouseEventHandler
 
 
 class subWindowFilterFloater(QMdiSubWindow):
@@ -9,41 +10,38 @@ class subWindowFilterFloater(QMdiSubWindow):
     def __init__(self, resizer, parent=None):
         super().__init__(parent)
         self.resizer = resizer
-        self.resizeBool = False
-        self.cursor = None
-        self.switchingInProgress = False
 
-    def eventFilter(self, obj, e):
-        if e.type() == QEvent.MouseButtonPress:
-            self.handle_mouse_button_press(obj, e)
-        elif e.type() == QEvent.MouseButtonRelease:
-            self.handle_mouse_button_release(obj, e)
-        elif e.type() == QEvent.Move:
-            self.handle_floater_move(obj)
-        return False
-
-    def handle_mouse_button_press(self, obj, e):
-        # reuse code from background filter!
-        cursorLocal = e.pos()  # cursor in relation to window
-        self.resizeBool = (
-            -25 < cursorLocal.x() < 25
-            or -3 < cursorLocal.y() < 3
-            or obj.width()-25 < cursorLocal.x() < obj.width()+25
-            or obj.height()-25 < cursorLocal.y() < obj.height()+25
+        self.mouseHandler = MouseEventHandler(resizer.mdiArea)
+        self.mouseHandler.on_release_funs.append(
+            self.handle_mouse_button_release
         )
 
-    def handle_mouse_button_release(self, obj, e):
-        self.cursor = self.resizer.mdiArea.mapFromGlobal(e.globalPos())
+        self.switching_in_progress = False
+
+    @property
+    def cursor(self):
+        return self.mouseHandler.last_cursor_position
+
+    def eventFilter(self, subwin, event):
+        self.mouseHandler.update_on_event(subwin, event)
+
+        if event.type() == QEvent.Move:
+            self.handle_floater_move(subwin)
+
+        return False
+
+    def handle_mouse_button_release(self, subwin, event):
         # deminimize on dragging minimized window
-        if obj.isMinimized() and e.y() < -5:
-            obj.showNormal()
+        if subwin.isMinimized() and event.y() < -5:
+            subwin.showNormal()
             # move to cursor position
-            obj.move(
-                self.cursor.x() - 0.5*obj.width(),
+            subwin.move(
+                self.cursor.x() - 0.5*subwin.width(),
                 self.cursor.y() - 10
             )
 
-    def handle_floater_move(self, obj):
+    # to resizer?
+    def handle_floater_move(self, subwin):
         """prevent freeze on user changing krita windows mode"""
         if not SettingsHandler().is_subwindows:
             return
@@ -55,30 +53,30 @@ class subWindowFilterFloater(QMdiSubWindow):
                 self.resizer.refPosition = "right"
 
             h = self.resizer.mdiArea.height()
-            if SPLITMODERANGE[0] * h < self.cursor.y() < SPLITMODERANGE[1] * h:
-                self.switchingInProgress = True
+            lower_bound, upper_bound = SPLITMODERANGE
+            if lower_bound * h < self.cursor.y() < upper_bound * h:
+                self.switching_in_progress = True
                 self.resizer.userModeSplit()
-                self.switchingInProgress = False
-                self.cursor = None
+                self.switching_in_progress = False
 
         elif is_minimizer_event(self):
-            obj.showMinimized()
+            subwin.showMinimized()
 
         # snap to border when floater moves
         else:
-            self.resizer.snapToBorder(obj)
+            self.resizer.snapToBorder(subwin)
 
 
 def is_split_screen_event(windowFilter):
     return (
         windowFilter.cursor
         and not windowFilter.resizer.refNeeded
-        and not windowFilter.resizeBool
+        and not windowFilter.mouseHandler.action_was_resize
         and not 5 < windowFilter.cursor.x() < windowFilter.resizer.mdiArea.width() - 5)
 
 
 def is_minimizer_event(windowFilter):
     return (
         windowFilter.cursor
-        and not windowFilter.resizeBool
+        and not windowFilter.mouseHandler.action_was_resize
         and windowFilter.cursor.y() > windowFilter.resizer.mdiArea.height() - 5)
